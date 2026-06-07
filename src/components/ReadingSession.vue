@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { SessionResult } from '../types'
-import { useHybridSpeechRecognition } from '../composables/useHybridSpeechRecognition'
+import { useSpeechRecognition } from '../composables/useSpeechRecognition'
 import { useTextComparison } from '../composables/useTextComparison'
 import { advanceMatch, matchDetail } from '../utils/matching'
 import { kanaCharsEqual, kanaToRomaji } from '../utils/romaji'
@@ -29,10 +29,7 @@ const {
   resume,
   finish,
   reset,
-  engineName,
-  activeMode,
-  fallbackNotice,
-} = useHybridSpeechRecognition()
+} = useSpeechRecognition()
 const { compareTexts } = useTextComparison()
 
 const manualTranscript = ref('')
@@ -251,8 +248,8 @@ onBeforeUnmount(() => {
         <h1>Читайте японський текст уголос</h1>
       </div>
       <div class="session-clock">
-        <span>{{ activeMode === 'server' ? 'Локальний ASR' : 'Web Speech API' }}</span>
-        <strong class="engine-label">{{ engineName }}</strong>
+        <span>Розпізнавання</span>
+        <strong class="engine-label">Web Speech API</strong>
       </div>
       <div class="session-clock">
         <span>Тривалість</span>
@@ -261,9 +258,6 @@ onBeforeUnmount(() => {
     </section>
 
     <MicrophoneStatus :status="status" :supported="isSupported" :message="errorMessage" />
-    <p v-if="activeMode === 'browser' && fallbackNotice" class="fallback-note">
-      {{ fallbackNotice }}
-    </p>
     <p v-if="readingLoading && !readingReady" class="reading-note">
       ⏳ Завантаження словника читань (кандзі → кана)… порівняння стане точнішим за мить.
     </p>

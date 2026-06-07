@@ -27,7 +27,13 @@
       "Bash(npx tsx *)",
       "Bash(npm test *)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(git symbolic-ref *)"
+      "Bash(git symbolic-ref *)",
+      "Bash(rm -rf server dist-server)",
+      "Bash(rm -f scripts/download-reazon-model.mjs tsconfig.server.json src/composables/useServerSpeechRecognition.ts src/composables/useHybridSpeechRecognition.ts src/composables/useAsrPreference.ts src/composables/useAsrDiagnostics.ts src/composables/useMicrophoneTest.ts src/components/AsrSourcePanel.vue src/components/MicrophoneSelector.vue)",
+      "Bash(rm -f package-lock.json)",
+      "Bash(rm -rf node_modules)",
+      "Bash(npm ci *)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

@@ -4,7 +4,6 @@ import FileUploadPanel from './components/FileUploadPanel.vue'
 import KanaReferenceTable from './components/KanaReferenceTable.vue'
 import KanaDrill from './components/KanaDrill.vue'
 import KanaStatsPanel from './components/KanaStatsPanel.vue'
-import MicrophoneSelector from './components/MicrophoneSelector.vue'
 import ReadingSession from './components/ReadingSession.vue'
 import ResultReview from './components/ResultReview.vue'
 import SessionHistory from './components/SessionHistory.vue'
@@ -121,7 +120,6 @@ const newSession = () => {
         </div>
 
         <aside class="side-column">
-          <MicrophoneSelector />
           <KanaStatsPanel :analysis="kanaAnalysis" />
           <KanaReferenceTable />
           <SessionHistory :history="history" @clear="clearHistory" />

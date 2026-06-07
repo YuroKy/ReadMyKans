@@ -5,28 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "tsx server/index.ts",
-    "dev:all": "concurrently \"npm:dev:server\" \"npm:dev\"",
-    "models:download": "node scripts/download-reazon-model.mjs",
     "setup:dict": "node scripts/copy-dict.mjs",
     "postinstall": "node scripts/copy-dict.mjs",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "build": "vue-tsc -b && vite build",
-    "build:server": "tsc -p tsconfig.server.json",
     "preview": "vite preview"
   },
   "dependencies": {
     "@sglkc/kuromoji": "^1.1.0",
     "@vitejs/plugin-vue": "^6.0.1",
-    "sherpa-onnx-node": "^1.13.2",
     "vite": "^8.0.10",
-    "vue": "^3.5.24",
-    "ws": "^8.21.0"
+    "vue": "^3.5.24"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.1",
+    "@types/node": "^25.9.2",
     "@vue/tsconfig": "^0.8.1",
-    "concurrently": "^10.0.3",
     "tsx": "^4.22.4",
     "typescript": "~5.9.3",
     "vue-tsc": "^3.1.5"

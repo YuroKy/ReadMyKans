@@ -42,6 +42,12 @@ describe('useKanaDrill', () => {
     assert.equal(d.submitKana('むう'), 'correct')
   })
 
+  it('は НЕ плутається з わ (сире は приймається для очікуваної は)', () => {
+    // регрес: kuromoji вважав ізольовану は часткою → わ → хибна помилка
+    const d = useKanaDrill(ref('は'), ref(1))
+    assert.equal(d.submitKana('は'), 'correct')
+  })
+
   it('next просуває індекс, isFinished в кінці', () => {
     const d = useKanaDrill(ref('むか'), ref(1))
     assert.equal(d.isFinished.value, false)

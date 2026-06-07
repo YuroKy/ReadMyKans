@@ -46,12 +46,20 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     return outcome
   }
 
-  /** Перевірити розпізнану/вимовлену кану (з ASR). */
-  const submitKana = (spokenKana: string): DrillOutcome => {
-    const spoken = [...spokenKana].filter(isKana)
-    const ok = checkKanaAnswer(currentChunk.value, spoken)
+  /**
+   * Перевірити розпізнаний з ASR текст. Пробуємо ДВА варіанти:
+   *  - сирий текст (як є — для коли ASR віддає кану напряму);
+   *  - читання через kuromoji (коли ASR віддав кандзі, напр. 歯→は).
+   * Приймаємо, якщо збігається хоч один. Це уникає хибних помилок, коли
+   * kuromoji трактує ізольовану は як частку й перетворює на わ.
+   */
+  const submitKana = (spokenText: string): DrillOutcome => {
+    const raw = [...spokenText].filter(isKana)
+    const reading = [...toReadingHiragana(spokenText)].filter(isKana)
+    const ok =
+      checkKanaAnswer(currentChunk.value, raw) || checkKanaAnswer(currentChunk.value, reading)
     const outcome: DrillOutcome = ok ? 'correct' : 'wrong'
-    record(outcome, spoken.join(''))
+    record(outcome, (raw.length ? raw : reading).join(''))
     return outcome
   }
 

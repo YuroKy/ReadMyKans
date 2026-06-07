@@ -12,12 +12,16 @@ const serveDictRaw = (): PluginOption => {
 
   const middleware: Connect.NextHandleFunction = (req, res, next) => {
     const url = req.url?.split('?')[0] ?? ''
-    if (!url.startsWith('/dict/') || !url.endsWith('.dat.gz')) {
+    // Base-незалежно: матчимо /dict/<file>.dat.gz будь-де в шляху
+    // (у preview base = /ReadMyKans/ → /ReadMyKans/dict/...)
+    const marker = '/dict/'
+    const idx = url.indexOf(marker)
+    if (idx === -1 || !url.endsWith('.dat.gz')) {
       next()
       return
     }
 
-    const fileName = url.slice('/dict/'.length)
+    const fileName = url.slice(idx + marker.length)
     // Захист від path traversal — лише прості імена файлів
     if (fileName.includes('/') || fileName.includes('..')) {
       next()
@@ -48,11 +52,13 @@ const serveDictRaw = (): PluginOption => {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages віддає проект за /<repo>/. У dev лишаємо корінь '/'.
+  base: command === 'build' ? '/ReadMyKans/' : '/',
   plugins: [vue(), serveDictRaw()],
   // Пре-бандлимо kuromoji наперед — стабільніший оптимізований чанк,
   // менше шансів на «Outdated Optimize Dep» при зміні графу імпортів.
   optimizeDeps: {
     include: ['@sglkc/kuromoji'],
   },
-})
+}))

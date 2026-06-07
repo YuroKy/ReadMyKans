@@ -26,7 +26,8 @@
       "Bash(npm uninstall *)",
       "Bash(npx tsx *)",
       "Bash(npm test *)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git symbolic-ref *)"
     ]
   }
 }

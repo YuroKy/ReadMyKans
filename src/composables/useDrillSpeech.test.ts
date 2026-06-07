@@ -76,4 +76,20 @@ describe('useDrillSpeech', () => {
     assert.equal(await s.started, false)
     assert.equal(await s.result, '')
   })
+
+  it('два сеанси поспіль працюють (без витоку стану)', async () => {
+    setWindow(MockRecognition)
+
+    MockRecognition.transcript = 'む'
+    const s1 = startDrillSpeech()
+    assert.equal(await s1.started, true)
+    s1.stop()
+    assert.equal(await s1.result, 'む')
+
+    MockRecognition.transcript = 'か'
+    const s2 = startDrillSpeech()
+    assert.equal(await s2.started, true)
+    s2.stop()
+    assert.equal(await s2.result, 'か')
+  })
 })

@@ -32,7 +32,9 @@ export const initReading = (): Promise<void> => {
     .then(
       (kuromoji) =>
         new Promise<void>((resolve) => {
-          kuromoji.builder({ dicPath: '/dict' }).build((err, builtTokenizer) => {
+          // BASE_URL враховує base зі збірки (напр. /ReadMyKans/ на GitHub Pages)
+        const dicPath = `${import.meta.env.BASE_URL}dict`.replace(/\/\//g, '/')
+        kuromoji.builder({ dicPath }).build((err, builtTokenizer) => {
             readingLoading.value = false
             if (err) {
               readingError.value = 'Не вдалося завантажити словник читань.'

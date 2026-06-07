@@ -2,6 +2,16 @@
 
 Kana Reader — це міні SPA для тренування читання японської кани вголос. Застосунок працює без бекенду: приймає введений текст або `.txt` файл, запускає розпізнавання мовлення через браузер, порівнює результат із джерелом і зберігає останні сесії в `localStorage`.
 
+🌐 **Сайт:** https://yuroky.github.io/ReadMyKans/
+
+## CI/CD
+
+Кожен push у `master` запускає GitHub Actions (`.github/workflows/deploy.yml`):
+**тести (`npm test`) → збірка (`npm run build`) → деплой на GitHub Pages.**
+Деплой відбувається лише якщо тести пройшли.
+
+> Один раз увімкніть Pages: **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+
 ## Встановлення
 
 ```bash

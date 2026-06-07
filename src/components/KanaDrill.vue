@@ -4,7 +4,6 @@ import { useKanaDrill } from '../composables/useKanaDrill'
 import { startDrillSpeech, isDrillSpeechSupported, type DrillSpeechSession } from '../composables/useDrillSpeech'
 import { usePushToTalk } from '../composables/usePushToTalk'
 import { kanaToRomaji } from '../utils/romaji'
-import { toReadingHiragana } from '../utils/reading'
 
 const props = defineProps<{ sourceText: string }>()
 const emit = defineEmits<{ exit: [] }>()
@@ -82,10 +81,10 @@ const {
     session.stop()
     const text = await session.result
     session = null
-    return toReadingHiragana(text)
+    return text // сирий текст; конвертацію робить submitKana (пробує обидва варіанти)
   },
   canStart: () => !lastOutcome.value && micSupported,
-  onResult: (kana) => handleOutcome(submitKana(kana)),
+  onResult: (text) => handleOutcome(submitKana(text)),
 })
 
 const micLabel = computed(() => {

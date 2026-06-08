@@ -8,6 +8,7 @@ import { kanaCharsEqual, kanaToRomaji } from '../utils/romaji'
 import { initReading, readingLoading, readingReady, toReadingHiragana } from '../utils/reading'
 import { normalizeJapaneseText } from '../utils/textNormalize'
 import MicrophoneStatus from './MicrophoneStatus.vue'
+import SakuraDecor from './SakuraDecor.vue'
 
 const props = defineProps<{
   sourceText: string
@@ -235,6 +236,7 @@ onBeforeUnmount(() => {
 <template>
   <main class="session-layout">
     <section class="session-hero">
+      <SakuraDecor />
       <div>
         <p class="eyebrow">Сесія читання</p>
         <h1>Читайте японський текст уголос</h1>

@@ -6,6 +6,7 @@ import KanaDrill from './components/KanaDrill.vue'
 import KanaStatsPanel from './components/KanaStatsPanel.vue'
 import ReadingSession from './components/ReadingSession.vue'
 import ResultReview from './components/ResultReview.vue'
+import SakuraDecor from './components/SakuraDecor.vue'
 import SessionHistory from './components/SessionHistory.vue'
 import TextInputPanel from './components/TextInputPanel.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
@@ -90,7 +91,8 @@ const newSession = () => {
 
     <main v-if="view === 'setup'" class="setup-layout">
       <section class="intro-panel">
-        <div>
+        <SakuraDecor density="rich" />
+        <div class="intro-copy">
           <p class="eyebrow">Практика вголос</p>
           <h1>Kana Reader</h1>
           <p>
@@ -138,5 +140,17 @@ const newSession = () => {
       @edit="editText"
       @new-session="newSession"
     />
+
+    <footer class="site-footer">
+      <span>© 2026 Yurii Fedelesh · ReadMyKans</span>
+      <span class="footer-sep" aria-hidden="true">·</span>
+      <a
+        href="https://github.com/YuroKy/ReadMyKans"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Вихідний код (AGPL-3.0)
+      </a>
+    </footer>
   </div>
 </template>

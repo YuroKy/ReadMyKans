@@ -70,3 +70,13 @@ If the microphone is unavailable or permission is denied, the drill still accept
 - Recognising a single isolated kana is the weakest spot for ASR; romaji input is always available as a reliable fallback.
 - Comparison uses reading normalisation plus a romaji-tolerant Levenshtein distance — no deep phonetic analysis.
 - Stats and history are stored locally (last 10 sessions for history).
+
+## License
+
+Copyright (C) 2026 Yurii Fedelesh
+
+This program is free software: you can redistribute it and/or modify it under the terms of the **GNU Affero General Public License** as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+It is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the full text in [`LICENSE`](LICENSE).
+
+Because Kana Reader is served over a network, the AGPL (section 13) requires that anyone interacting with it remotely can obtain the corresponding source code. The source is available at <https://github.com/YuroKy/ReadMyKans>.

@@ -2,6 +2,13 @@
   "name": "kana-reader",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
+  "author": "Yurii Fedelesh <yurii.fedelesh@gmail.com>",
+  "homepage": "https://yuroky.github.io/ReadMyKans/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YuroKy/ReadMyKans.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

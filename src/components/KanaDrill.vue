@@ -11,6 +11,10 @@ import { useKanaStats, isWeak, topConfusion } from '../composables/useKanaStats'
 import { isKana } from '../utils/kana'
 import { kanaToRomaji, romajiToKana } from '../utils/romaji'
 import { kanaContrast } from '../utils/kanaContrast'
+import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
+import { collectConfusionPairs } from '../utils/confusions'
+import { encouragement } from '../utils/encouragement'
+import SakuraDecor from './SakuraDecor.vue'
 
 const props = defineProps<{ sourceText: string }>()
 const emit = defineEmits<{ exit: [] }>()
@@ -52,12 +56,14 @@ watch(chunkSize, () => {
   reset()
   answer.value = ''
   revealed.value = false
+  sessionPairs.value = []
   focusInput()
 })
 
 const stats = useKanaStats()
 
 const lastConfused = ref('')
+const sessionPairs = ref<Array<[string, string]>>([])
 
 const isSingleKana = computed(() => currentChunk.value.length === 1)
 
@@ -71,6 +77,7 @@ const recordStat = (outcome: 'correct' | 'wrong', confusedKana: string) => {
     const confused = confusedKana && confusedKana !== kana ? confusedKana : ''
     stats.record(kana, false, confused || undefined)
     lastConfused.value = confused
+    if (confused) sessionPairs.value.push([kana, confused])
   }
 }
 
@@ -154,6 +161,7 @@ const restart = () => {
   reset()
   answer.value = ''
   revealed.value = false
+  sessionPairs.value = []
   focusInput()
 }
 
@@ -195,6 +203,32 @@ const contrast = computed(() =>
 
 const weakSummary = computed(() => stats.weak().slice(0, 10))
 
+const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))
+const accuracy = computed(() =>
+  total.value === 0 ? 0 : Math.round((correctCount.value / total.value) * 100),
+)
+const headline = computed(() => encouragement(accuracy.value))
+
+const difficulty = computed(() => analyzeKanaDifficulty(props.sourceText))
+const difficultyTiers = computed(() => {
+  const data = difficulty.value
+  const denom = data.total || 1
+  const pct = (value: number) => Math.round((value / denom) * 100)
+  return [
+    { key: 'easy', label: 'Легкі', count: data.easy, pct: pct(data.easy) },
+    { key: 'medium', label: 'Середні', count: data.medium, pct: pct(data.medium) },
+    { key: 'hard', label: 'Складні', count: data.hard, pct: pct(data.hard) },
+  ]
+})
+const donutGradient = computed(() => {
+  const data = difficulty.value
+  if (data.total === 0) return 'conic-gradient(var(--divider) 0 100%)'
+  const easyEnd = (data.easy / data.total) * 100
+  const mediumEnd = easyEnd + (data.medium / data.total) * 100
+  return `conic-gradient(var(--mint-strong) 0 ${easyEnd}%, var(--sky-strong) ${easyEnd}% ${mediumEnd}%, var(--rose-strong) ${mediumEnd}% 100%)`
+})
+const drillConfusions = computed(() => collectConfusionPairs(sessionPairs.value, 5))
+
 onMounted(() => focusInput())
 </script>
 
@@ -221,36 +255,129 @@ onMounted(() => focusInput())
       </div>
     </section>
 
-    <section class="panel drill-progress">
+    <section v-if="!isFinished" class="panel drill-progress">
       <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
       <strong>{{ correctCount }} правильних</strong>
     </section>
 
-    <section v-if="isFinished" class="panel drill-card drill-done">
-      <p class="eyebrow">Готово 🎉</p>
-      <h2>{{ correctCount }} / {{ total }} правильних</h2>
-
-      <div v-if="weakSummary.length" class="drill-weak">
-        <span class="eyebrow">Варто повторити</span>
-        <div class="drill-weak-list">
-          <span v-for="w in weakSummary" :key="w.kana" class="drill-weak-chip">
-            <strong>{{ w.kana }}</strong>
-            <small>{{ kanaToRomaji(w.kana) }} · {{ w.wrong }} помилок</small>
-          </span>
+    <template v-if="isFinished">
+      <section class="panel result-summary">
+        <SakuraDecor density="rich" />
+        <div class="result-summary-main">
+          <div class="result-summary-head">
+            <p class="eyebrow">Підсумок практики</p>
+            <h1>{{ headline.title }}</h1>
+            <p class="result-subtitle">{{ headline.subtitle }}</p>
+          </div>
+          <span class="result-badge">🌸 {{ correctCount }} / {{ total }} правильних</span>
         </div>
-      </div>
 
-      <div class="drill-actions">
+        <div class="accuracy-ring big" :style="{ '--score': `${accuracy}%` }">
+          <strong>{{ accuracy }}%</strong>
+          <span>точність</span>
+        </div>
+      </section>
+
+      <section class="result-stats">
+        <div class="panel mini-stat">
+          <span>Карток усього</span>
+          <strong>{{ total }}</strong>
+        </div>
+        <div class="panel mini-stat accent-ok">
+          <span>Правильних</span>
+          <strong>{{ correctCount }}</strong>
+        </div>
+        <div class="panel mini-stat accent-bad">
+          <span>Помилок</span>
+          <strong>{{ wrongCount }}</strong>
+        </div>
+        <div class="panel mini-stat">
+          <span>Кан у тексті</span>
+          <strong>{{ difficulty.total }}</strong>
+        </div>
+      </section>
+
+      <section class="result-insights">
+        <article class="panel insight-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Розбір</p>
+              <h2>Складність кани</h2>
+            </div>
+          </div>
+
+          <div class="difficulty-body">
+            <div
+              class="difficulty-donut"
+              :style="{ '--donut': donutGradient }"
+              role="img"
+              aria-label="Розподіл кани за складністю"
+            >
+              <strong>{{ difficulty.total }}</strong>
+              <span>кан</span>
+            </div>
+            <ul class="difficulty-legend">
+              <li v-for="tier in difficultyTiers" :key="tier.key" :class="tier.key">
+                <span class="difficulty-dot" />
+                <span class="difficulty-label">{{ tier.label }}</span>
+                <strong>{{ tier.count }}</strong>
+                <small>({{ tier.pct }}%)</small>
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="panel insight-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Помилки</p>
+              <h2>Найчастіші плутанини</h2>
+            </div>
+          </div>
+
+          <ul v-if="drillConfusions.length" class="confusion-list">
+            <li v-for="pair in drillConfusions" :key="`${pair.a}-${pair.b}`" class="confusion-row">
+              <span class="confusion-pair">
+                <b>{{ pair.a }}</b>
+                <i>↔</i>
+                <b>{{ pair.b }}</b>
+              </span>
+              <span class="confusion-count">{{ pair.count }}</span>
+            </li>
+          </ul>
+          <p v-else class="empty-copy">Цього разу плутанини не зафіксовано. Так тримати! 🌸</p>
+        </article>
+
+        <article class="panel insight-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Повторення</p>
+              <h2>Варто повторити</h2>
+            </div>
+          </div>
+
+          <div v-if="weakSummary.length" class="drill-weak-list">
+            <span v-for="w in weakSummary" :key="w.kana" class="drill-weak-chip">
+              <strong>{{ w.kana }}</strong>
+              <small>{{ kanaToRomaji(w.kana) }} · {{ w.wrong }} помилок</small>
+            </span>
+          </div>
+          <p v-else class="empty-copy">Слабких кан поки немає — гарно йде! 🌸</p>
+        </article>
+      </section>
+
+      <section class="session-actions" aria-label="Подальші дії">
         <button class="primary-button" type="button" @click="restart">Спочатку</button>
-        <button class="ghost-button" type="button" @click="emit('exit')">До тексту</button>
-      </div>
-    </section>
+        <button class="secondary-button" type="button" @click="emit('exit')">До тексту</button>
+      </section>
+    </template>
 
     <section
       v-else
       class="panel drill-card"
       :class="{ correct: lastOutcome === 'correct', wrong: lastOutcome === 'wrong' }"
     >
+      <SakuraDecor />
       <div class="drill-kana-row">
         <strong class="drill-kana">{{ expectedKana || '—' }}</strong>
         <button

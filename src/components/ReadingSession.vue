@@ -49,7 +49,6 @@ const visibleTranscript = computed(() => {
   return transcript.value
 })
 
-// readingReady у залежностях — щоб перерахувати коли словник завантажиться
 const normalizedOriginalChars = computed(() => {
   void readingReady.value
   return [...normalizeJapaneseText(toReadingHiragana(props.sourceText))]
@@ -59,8 +58,6 @@ const normalizedSpokenChars = computed(() => {
   return [...normalizeJapaneseText(toReadingHiragana(visibleTranscript.value))]
 })
 
-// Підтверджений прогрес: скільки кани оригіналу вже правильно прочитано.
-// Оновлюється монотонно через advanceMatch — стійко до сміття й ковзного вікна ASR.
 const confirmedLen = ref(0)
 
 watch(normalizedSpokenChars, (spoken) => {
@@ -75,7 +72,6 @@ const liveFeedback = computed(() => {
   const currentIndex = isComplete ? Math.max(original.length - 1, 0) : matched
   const expectedKana = original[currentIndex] ?? ''
 
-  // «Ви назвали» = кана, вимовлена на місці очікуваної (а не останній символ).
   const attempt = matchDetail(original, spoken, matched).attempt
   const hasMismatch = !isComplete && attempt !== '' && !kanaCharsEqual(expectedKana, attempt)
   const spokenAtCurrent = hasMismatch ? attempt : ''
@@ -100,14 +96,12 @@ const acceptedTranscript = computed(() =>
 )
 const rawRecognitionPreview = computed(() => visibleTranscript.value.trim())
 
-// Прогрес-бар: відсоток правильно прочитаного тексту
 const progressPercent = computed(() => {
   const total = liveFeedback.value.total
   if (total === 0) return 0
   return Math.round((liveFeedback.value.correctPrefixLength / total) * 100)
 })
 
-// Індикатор активності: спалахує коли приходить новий розпізнаний текст
 const isRecognizing = ref(false)
 let recognizeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -115,14 +109,13 @@ watch(transcript, (next, prev) => {
   if (next !== prev && next.trim()) {
     isRecognizing.value = true
     if (recognizeTimer) clearTimeout(recognizeTimer)
-    // Якщо протягом 1.2с тексту не приходить — вважаємо що ASR мовчить
+
     recognizeTimer = setTimeout(() => {
       isRecognizing.value = false
     }, 1200)
   }
 })
 
-// Чи отримали ми хоч щось від розпізнавання
 const hasAnyRecognition = computed(() => rawRecognitionPreview.value.length > 0)
 
 const sourceCharacters = computed(() => {
@@ -202,8 +195,7 @@ const restart = () => {
 
 const finishSession = () => {
   const isManual = !isSupported.value || status.value === 'error'
-  // ASR: зараховуємо підтверджений прогрес (правильно прочитану кану).
-  // Ручний ввід: повний текст для детального порівняння.
+
   const recognizedText = isManual
     ? visibleTranscript.value.trim()
     : normalizedOriginalChars.value.slice(0, liveFeedback.value.correctPrefixLength).join('')
@@ -227,7 +219,7 @@ const finishSession = () => {
 }
 
 onMounted(() => {
-  void initReading() // підвантажуємо словник читань (якщо ще не завантажений)
+  void initReading()
   confirmedLen.value = 0
   startedAt.value = Date.now()
   start()
@@ -262,7 +254,6 @@ onBeforeUnmount(() => {
       ⏳ Завантаження словника читань (кандзі → кана)… порівняння стане точнішим за мить.
     </p>
 
-    <!-- Прогрес читання + індикатор активності розпізнавання -->
     <section v-if="isSupported && status !== 'error'" class="panel recognition-progress">
       <div class="recognition-head">
         <span class="recognition-activity" :class="{ live: isRecognizing }">
@@ -278,7 +269,13 @@ onBeforeUnmount(() => {
         <strong class="recognition-percent">{{ progressPercent }}%</strong>
       </div>
 
-      <div class="progress-track" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
+      <div
+        class="progress-track"
+        role="progressbar"
+        :aria-valuenow="progressPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
         <div class="progress-fill" :style="{ width: `${progressPercent}%` }" />
       </div>
 
@@ -313,7 +310,9 @@ onBeforeUnmount(() => {
         <span class="eyebrow">Ви назвали</span>
         <strong>{{ liveFeedback.spokenAtCurrent || '—' }}</strong>
         <b class="romaji-text">{{ liveFeedback.spokenRomaji || 'romaji' }}</b>
-        <span v-if="liveFeedback.hasMismatch">Не зараховано. Очікувалось: {{ liveFeedback.expected }}</span>
+        <span v-if="liveFeedback.hasMismatch"
+          >Не зараховано. Очікувалось: {{ liveFeedback.expected }}</span
+        >
         <span v-else-if="liveFeedback.isComplete">Текст прочитано до кінця</span>
         <span v-else>Помилки на поточній кані немає</span>
       </div>
@@ -353,10 +352,7 @@ onBeforeUnmount(() => {
 
         <div v-if="isSupported && status !== 'error'" class="accepted-box">
           <p class="transcript-box accepted-transcript">
-            {{
-              acceptedTranscript ||
-              'Сюди додається лише та частина, яку прочитано правильно.'
-            }}
+            {{ acceptedTranscript || 'Сюди додається лише та частина, яку прочитано правильно.' }}
           </p>
 
           <div v-if="liveFeedback.hasMismatch" class="rejected-attempt">
@@ -367,14 +363,13 @@ onBeforeUnmount(() => {
             </span>
           </div>
           <p v-else class="muted compact">
-            Розпізнавання може приходити із затримкою, але в цей блок потрапляє тільки збіг з оригіналом.
+            Розпізнавання може приходити із затримкою, але в цей блок потрапляє тільки збіг з
+            оригіналом.
           </p>
         </div>
 
         <div v-else class="manual-box">
-          <p class="muted">
-            Введіть те, що було прочитано, щоб перевірити алгоритм порівняння.
-          </p>
+          <p class="muted">Введіть те, що було прочитано, щоб перевірити алгоритм порівняння.</p>
           <textarea
             v-model="manualTranscript"
             class="manual-textarea"

@@ -3,8 +3,6 @@ import assert from 'node:assert/strict'
 import { ref } from 'vue'
 import { useKanaDrill } from './useKanaDrill'
 
-// kuromoji не ініціалізований → toReadingHiragana = identity; тести на кані.
-
 describe('useKanaDrill', () => {
   it('розбиває джерело на шматки по chunkSize=1', () => {
     const d = useKanaDrill(ref('むかし'), ref(1))
@@ -43,7 +41,6 @@ describe('useKanaDrill', () => {
   })
 
   it('は НЕ плутається з わ (сире は приймається для очікуваної は)', () => {
-    // регрес: kuromoji вважав ізольовану は часткою → わ → хибна помилка
     const d = useKanaDrill(ref('は'), ref(1))
     assert.equal(d.submitKana('は'), 'correct')
   })
@@ -78,6 +75,6 @@ describe('useKanaDrill', () => {
 
   it('ігнорує пунктуацію та пробіли в джерелі', () => {
     const d = useKanaDrill(ref('む、か し。'), ref(1))
-    assert.equal(d.total.value, 3) // む, か, し
+    assert.equal(d.total.value, 3)
   })
 })

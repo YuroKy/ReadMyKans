@@ -44,9 +44,7 @@ const handleFile = (event: Event) => {
     <div>
       <p class="eyebrow">Файл</p>
       <h2>Завантажте .txt</h2>
-      <p class="muted">
-        Текст буде додано в поле вище, і його можна змінити перед початком.
-      </p>
+      <p class="muted">Текст буде додано в поле вище, і його можна змінити перед початком.</p>
     </div>
 
     <label class="upload-dropzone">

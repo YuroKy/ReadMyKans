@@ -2,9 +2,6 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { compareTexts } from './useTextComparison'
 
-// Примітка: словник kuromoji у тестах не ініціалізований, тому toReadingHiragana
-// повертає вхід без змін. Тести працюють на кана-входах (без кандзі).
-
 describe('compareTexts', () => {
   it('повний збіг → 100% і всі сегменти correct', () => {
     const r = compareTexts('おじいさん', 'おじいさん')

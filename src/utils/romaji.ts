@@ -154,14 +154,24 @@ export const textToRomaji = (text: string): string => {
   return parts.join(' ')
 }
 
-// Романізація без пробілів — для порівняння рядків
-export const textToRomajiCompact = (text: string): string =>
-  textToRomaji(text).replace(/ /g, '')
+export const textToRomajiCompact = (text: string): string => textToRomaji(text).replace(/ /g, '')
 
-// Романі-толерантна рівність двох символів кани: ідентичні АБО однакова
-// вимова (じ/ぢ→ji, ず/づ→zu). Для не-кани повертає лише точний збіг.
 export const kanaCharsEqual = (a: string, b: string): boolean => {
   if (a === b) return true
   const ra = kanaToRomaji(a)
   return ra !== '' && ra === kanaToRomaji(b)
 }
+
+const ROMAJI_TO_KANA: Record<string, string> = (() => {
+  const map: Record<string, string> = {}
+  for (const [kana, romaji] of Object.entries(BASIC_ROMAJI)) {
+    if (!(romaji in map)) map[romaji] = kana
+  }
+  for (const [kana, romaji] of Object.entries(DIGRAPH_ROMAJI)) {
+    if (!(romaji in map)) map[romaji] = kana
+  }
+  return map
+})()
+
+export const romajiToKana = (romaji: string): string =>
+  ROMAJI_TO_KANA[romaji.trim().toLowerCase()] ?? ''

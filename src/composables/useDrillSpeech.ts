@@ -7,11 +7,10 @@ const getCtor = () =>
 export const isDrillSpeechSupported = (): boolean => Boolean(getCtor())
 
 export interface DrillSpeechSession {
-  /** true коли розпізнавання реально стартувало (onstart). */
   started: Promise<boolean>
-  /** Зупинити й отримати фінальний текст. */
+
   stop: () => void
-  /** Розпізнаний текст (резолвиться на onend/onerror/watchdog). */
+
   result: Promise<string>
 }
 
@@ -21,9 +20,6 @@ const INERT: DrillSpeechSession = {
   result: Promise.resolve(''),
 }
 
-// Тримаємо ПОСИЛАННЯ на активний інстанс, щоб коректно прибрати його перед
-// новим сеансом (звільнити мікрофон). activeId відсікає «застарілі» події
-// від попереднього (вже скасованого) розпізнавача.
 let currentRec: SpeechRecognitionLike | null = null
 let activeId = 0
 
@@ -34,22 +30,13 @@ const cleanup = (rec: SpeechRecognitionLike) => {
   rec.onend = null
   try {
     rec.abort()
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
-/**
- * Один сеанс push-to-talk через Web Speech API.
- * Надійний до повторних натискань: перед новим сеансом скасовує попередній
- * розпізнавач (звільняє мікрофон), ігнорує його запізнілі події, і має
- * watchdog на випадок, якщо браузер «зависне» і не дасть onend.
- */
 export const startDrillSpeech = (): DrillSpeechSession => {
   const Ctor = getCtor()
   if (!Ctor) return INERT
 
-  // Прибираємо попередній сеанс (звільняє мікрофон/зʼєднання)
   if (currentRec) {
     cleanup(currentRec)
     currentRec = null
@@ -78,7 +65,7 @@ export const startDrillSpeech = (): DrillSpeechSession => {
     if (settled || isStale()) return
     settled = true
     if (watchdog) clearTimeout(watchdog)
-    resolveStarted(false) // якщо onstart не спрацював
+    resolveStarted(false)
     resolveResult(text)
     if (currentRec === rec) currentRec = null
   }
@@ -111,7 +98,7 @@ export const startDrillSpeech = (): DrillSpeechSession => {
       } catch {
         finish()
       }
-      // Якщо браузер не дасть onend за 2.5с — завершуємо самі
+
       if (!watchdog && !settled) {
         watchdog = setTimeout(finish, 2500)
       }

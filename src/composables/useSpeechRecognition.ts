@@ -33,8 +33,6 @@ export const useSpeechRecognition = () => {
   const isSupported = computed(() => Boolean(getSpeechRecognition()))
   const transcript = computed(() => `${finalTranscript.value}${interimTranscript.value}`)
 
-  // Намір слухати: Web Speech API періодично сам завершує сесію (особливо в тиші),
-  // тому поки користувач не натиснув паузу/стоп — ми автоматично перезапускаємо.
   let shouldListen = false
 
   const ensureRecognition = () => {
@@ -59,20 +57,15 @@ export const useSpeechRecognition = () => {
     }
 
     instance.onend = () => {
-      // Авто-перезапуск поки слухаємо (Chrome завершує сесію кожні ~кілька секунд).
-      // Текст НЕ чистимо — прогрес тримає компонент (advanceMatch монотонний).
       if (shouldListen) {
         try {
           instance.start()
         } catch {
-          // start() може кинути якщо ще не повністю зупинено — пробуємо ще раз
           window.setTimeout(() => {
             if (shouldListen) {
               try {
                 instance.start()
-              } catch {
-                /* ігноруємо */
-              }
+              } catch {}
             }
           }, 250)
         }
@@ -85,7 +78,6 @@ export const useSpeechRecognition = () => {
     }
 
     instance.onerror = (event: SpeechRecognitionErrorEventLike) => {
-      // no-speech / aborted — не фатально: onend сам перезапустить
       if (event.error === 'no-speech' || event.error === 'aborted') {
         return
       }
@@ -125,9 +117,7 @@ export const useSpeechRecognition = () => {
     shouldListen = true
     try {
       instance.start()
-    } catch {
-      // Вже запущено — це нормально, продовжуємо слухати
-    }
+    } catch {}
   }
 
   const pause = () => {

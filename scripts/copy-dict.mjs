@@ -1,5 +1,3 @@
-// Копіює словник kuromoji у public/dict, щоб Vite роздавав його за /dict.
-// Запускається вручну (npm run setup:dict) і автоматично через postinstall.
 import { existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'

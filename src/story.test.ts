@@ -4,16 +4,13 @@ import { normalizeJapaneseText } from './utils/textNormalize'
 import { advanceMatch } from './utils/matching'
 import { compareTexts } from './composables/useTextComparison'
 
-// ── Фікстура: рядки казки «かぐやひめ» (як їх бачить користувач) ──────────────
-// Примітка: словник kuromoji у тестах не ініціалізований, тому читання = вхід.
-// Рядки вже на кані, тож порівняння вимови працює напряму.
 const KAGUYA = {
   title: 'かぐやひめ',
   line1: 'むかし　むかし　おじいさんが　たけやぶへ　いくと',
   line2: 'きらきら　ひかる　たけが　ありました。',
   line3: 'おじいさんが　たけを　きると　なかには',
   line4: 'かわいらしい　おんなのこが　ねむっていました。',
-  // Містить づ (なづけて) — перевірка романі-толерантності
+
   line5: '「かぐやひめと　なづけて　たいせつに　そだてましょう。」',
   line6: 'わたしは　つきの　くにで　うまれました。',
   line7: 'おじいさん　おばあさん　さようなら。',
@@ -50,21 +47,21 @@ describe('Казка かぐやひめ — advanceMatch (живий матчинг
 
   it('часткове читання → частковий прогрес', () => {
     const original = chars(KAGUYA.line3)
-    const spoken = [...norm('おじいさんがたけを')] // прочитано лише початок
+    const spoken = [...norm('おじいさんがたけを')]
     assert.equal(advanceMatch(original, spoken, 0), spoken.length)
   })
 
   it('толерантність до сміття ASR всередині фрази', () => {
     const original = chars(KAGUYA.line3)
-    // ASR вставив сміття «ほ» між «を» і «きると»
+
     const spoken = [...norm('おじいさんがたけを'), 'ほ', ...norm('きるとなかには')]
     assert.equal(advanceMatch(original, spoken, 0), original.length)
   })
 
   it('ковзне вікно ASR: продовження з підтвердженого вказівника', () => {
     const original = chars(KAGUYA.line3)
-    const anchor = [...norm('おじいさんがたけを')].length // 9
-    // друга фраза без початку (вікно з'їхало)
+    const anchor = [...norm('おじいさんがたけを')].length
+
     const spoken = [...norm('きるとなかには')]
     assert.equal(advanceMatch(original, spoken, anchor), original.length)
   })
@@ -78,7 +75,7 @@ describe('Казка かぐやひめ — advanceMatch (живий матчинг
   it('читання частинами накопичує прогрес монотонно', () => {
     const original = chars(KAGUYA.line1)
     let progress = 0
-    // три шматки поспіль
+
     progress = advanceMatch(original, [...norm('むかしむかし')], progress)
     progress = advanceMatch(original, [...norm('おじいさんが')], progress)
     progress = advanceMatch(original, [...norm('たけやぶへいくと')], progress)
@@ -112,7 +109,6 @@ describe('Казка かぐやひめ — compareTexts (підсумок сесі
   })
 
   it('одна неправильна кана → точність нижча за 100, але висока', () => {
-    // замінили одну кану: くにで → くにと
     const r = compareTexts(KAGUYA.line6, 'わたしはつきのくにとうまれました')
     assert.ok(r.similarity < 100 && r.similarity > 85, `отримав ${r.similarity}`)
   })

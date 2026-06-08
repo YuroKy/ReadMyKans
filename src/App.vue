@@ -14,7 +14,6 @@ import { analyzeKana } from './utils/kana'
 import { initReading } from './utils/reading'
 import { DEFAULT_STORY } from './data/defaultStory'
 
-// Підвантажуємо словник читань заздалегідь, поки користувач готує текст
 void initReading()
 
 const view = ref<AppView>('setup')
@@ -95,17 +94,13 @@ const newSession = () => {
           <p class="eyebrow">Практика вголос</p>
           <h1>Kana Reader</h1>
           <p>
-            Вставте японський текст, прочитайте його вголос і отримайте зрозумілий
-            результат із каною для повторення.
+            Вставте японський текст, прочитайте його вголос і отримайте зрозумілий результат із
+            каною для повторення.
           </p>
         </div>
         <div class="intro-actions">
-          <button class="secondary-button" type="button" @click="startDrill">
-            Тренувати кану
-          </button>
-          <button class="primary-button" type="button" @click="startReading">
-            Почати читання
-          </button>
+          <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
+          <button class="primary-button" type="button" @click="startReading">Почати читання</button>
         </div>
       </section>
 

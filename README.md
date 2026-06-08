@@ -1,72 +1,72 @@
 # Kana Reader
 
-Kana Reader — це міні SPA для тренування читання японської кани вголос. Застосунок працює повністю в браузері: приймає введений текст або `.txt` файл, розпізнає мовлення через Web Speech API, порівнює результат із джерелом і зберігає останні сесії в `localStorage`.
+Kana Reader is a small browser SPA for practising reading Japanese kana (hiragana / katakana) out loud. It runs entirely in the browser — no backend: you paste text or upload a `.txt` file, the app recognises speech via the Web Speech API, compares it to the source, and stores recent sessions in `localStorage`.
 
-🌐 **Сайт:** https://yuroky.github.io/ReadMyKans/
+🌐 **Live site:** https://yuroky.github.io/ReadMyKans/
 
 ## CI/CD
 
-Кожен push у `master` запускає GitHub Actions (`.github/workflows/deploy.yml`):
-**тести (`npm test`) → збірка (`npm run build`) → деплой на GitHub Pages.**
-Деплой відбувається лише якщо тести пройшли.
+Every push to `master` runs GitHub Actions (`.github/workflows/deploy.yml`):
+**tests (`npm test`) → build (`npm run build`) → deploy to GitHub Pages.**
+Deployment only happens if the tests pass.
 
-> Один раз увімкніть Pages: **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+> Enable Pages once: **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 
-## Встановлення
+## Install
 
 ```bash
 npm install
 ```
 
-## Локальний запуск
+## Run locally
 
 ```bash
 npm run dev
 ```
 
-Після запуску відкрийте адресу, яку покаже Vite, зазвичай `http://localhost:5173`.
+Then open the URL Vite prints, usually `http://localhost:5173`.
 
-## Режими
+## Modes
 
-- **Тренувати кану** — картковий дрил: показує кану, ви відповідаєте голосом (push-to-talk) або вводите ромадзі, отримуєте миттєвий фідбек. Розмір «шматка» (1 кана → слово → рядок) регулюється повзунком.
-- **Почати читання** — читаєте текст уголос неперервно, у кінці бачите точність і кану для повторення.
+- **Kana practice** — a flashcard drill: a kana is shown, you answer by voice (push-to-talk) or by typing romaji, and get instant feedback. The chunk size (1 kana → word → line) is adjustable with a slider.
+  - **Learning stats:** mistakes are remembered per kana. Kana you struggle with get highlighted, the card reminds you which kana you tend to confuse it with, and after a wrong answer the app explains the difference (e.g. *む = "mu", も = "mo" — same vowel, different consonant*). The finish screen lists the kana worth reviewing.
+- **Reading** — read the text aloud continuously; at the end you get an accuracy score and the kana to review.
 
-Розпізнавання — через **Web Speech API** браузера (`ja-JP`). Потрібен Chromium-браузер, дозвіл на мікрофон та інтернет.
+Speech recognition uses the browser **Web Speech API** (`ja-JP`). A Chromium-based browser, microphone permission and an internet connection are required.
 
-## Тести
+## Tests
 
 ```bash
 npm test
 ```
 
-Тести (node:test + tsx) покривають чисту логіку: нормалізацію, романізацію, матчинг, чанкінг, стан дрила та push-to-talk.
+Tests (node:test + tsx) cover the pure logic: normalisation, romaji, matching, chunking, drill state, push-to-talk state machine and learning stats.
 
-## Збірка
+## Build
 
 ```bash
 npm run build
 ```
 
-Локальна перевірка production-збірки:
+Preview the production build locally:
 
 ```bash
 npm run preview
 ```
 
-## Читання кандзі
+## Kanji readings
 
-Кандзі перетворюються на читання кани через `kuromoji` (словник вантажиться лениво, ~15MB, кешується). Дефолтний текст і дрил — повністю на кані, тож працюють і без словника (graceful degradation).
+Kanji are converted to kana readings via `kuromoji` (dictionary lazy-loaded, ~15 MB, cached). The default text and the drill are pure kana, so they work even without the dictionary (graceful degradation).
 
-## Підтримка браузерів
+## Browser support
 
-Розпізнавання використовує Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`, `ja-JP`). Найкраща підтримка — у Chromium-браузерах (Chrome, Edge). У Safari/Firefox API може бути недоступним.
+Recognition relies on the Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`, `ja-JP`). Best support is in Chromium browsers (Chrome, Edge). In Safari / Firefox the API may be unavailable.
 
-Якщо мікрофон недоступний чи дозвіл відхилено — у дрилі лишається ввід ромадзі, у режимі читання — ручний ввід тексту.
+If the microphone is unavailable or permission is denied, the drill still accepts romaji input, and the reading mode offers manual text entry.
 
-## Відомі обмеження
+## Known limitations
 
-- Web Speech API залежить від браузера, дозволів, мікрофона та мережі.
-- Розпізнавання однієї ізольованої кани — найслабше місце ASR; для цього є надійний резерв (ввід ромадзі).
-- Порівняння використовує нормалізацію читання + романі-толерантний Levenshtein, без глибокого фонетичного аналізу.
-- Історія зберігається локально, останні 10 сесій.
-```
+- The Web Speech API depends on the browser, permissions, the microphone and network services.
+- Recognising a single isolated kana is the weakest spot for ASR; romaji input is always available as a reliable fallback.
+- Comparison uses reading normalisation plus a romaji-tolerant Levenshtein distance — no deep phonetic analysis.
+- Stats and history are stored locally (last 10 sessions for history).

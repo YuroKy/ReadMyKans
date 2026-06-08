@@ -6,14 +6,9 @@ import { kanaToRomaji } from '../utils/romaji'
 
 export type DrillOutcome = 'correct' | 'wrong'
 
-/**
- * Стан дрила «карткою»: проходимо кану шматками по `chunkSize`.
- * chunkSize=1 — одна кана за раз (для початківця); більше — слова/рядки.
- */
 export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) => {
-  // Кана для дрила: читання джерела (кандзі→кана) без пунктуації/пробілів
   const allKana = computed(() => {
-    void readingReady.value // перерахувати коли словник завантажиться
+    void readingReady.value
     return [...toReadingHiragana(sourceText.value)].filter(isKana)
   })
 
@@ -22,9 +17,9 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
 
   const index = ref(0)
   const outcomes = ref<Array<DrillOutcome | null>>([])
-  // Підсумок останньої спроби (для фідбеку)
+
   const lastOutcome = ref<DrillOutcome | null>(null)
-  const lastAnswer = ref('') // що користувач сказав/ввів (для показу «ви назвали»)
+  const lastAnswer = ref('')
 
   const currentChunk = computed(() => chunks.value[index.value] ?? [])
   const expectedKana = computed(() => currentChunk.value.join(''))
@@ -38,7 +33,6 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     lastAnswer.value = answer
   }
 
-  /** Перевірити введену ромадзі. */
   const submitRomaji = (romaji: string): DrillOutcome => {
     const ok = checkRomajiAnswer(expectedKana.value, romaji)
     const outcome: DrillOutcome = ok ? 'correct' : 'wrong'
@@ -46,13 +40,6 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     return outcome
   }
 
-  /**
-   * Перевірити розпізнаний з ASR текст. Пробуємо ДВА варіанти:
-   *  - сирий текст (як є — для коли ASR віддає кану напряму);
-   *  - читання через kuromoji (коли ASR віддав кандзі, напр. 歯→は).
-   * Приймаємо, якщо збігається хоч один. Це уникає хибних помилок, коли
-   * kuromoji трактує ізольовану は як частку й перетворює на わ.
-   */
   const submitKana = (spokenText: string): DrillOutcome => {
     const raw = [...spokenText].filter(isKana)
     const reading = [...toReadingHiragana(spokenText)].filter(isKana)

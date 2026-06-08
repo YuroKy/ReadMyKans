@@ -2,7 +2,6 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { usePushToTalk } from './usePushToTalk'
 
-// Відкладений проміс для контролю таймінгу в тестах
 const defer = <T>() => {
   let resolve!: (v: T) => void
   const promise = new Promise<T>((r) => {
@@ -38,7 +37,7 @@ describe('usePushToTalk', () => {
 
     await ptt.press()
     assert.equal(ptt.state.value, 'idle')
-    await ptt.release() // нічого не має статись
+    await ptt.release()
     assert.deepEqual(results, [])
   })
 
@@ -80,17 +79,17 @@ describe('usePushToTalk', () => {
       onResult: (t) => results.push(t),
     })
 
-    const pressPromise = ptt.press() // зависає на connecting
+    const pressPromise = ptt.press()
     assert.equal(ptt.state.value, 'connecting')
 
-    await ptt.release() // відпустили рано
-    assert.equal(ptt.state.value, 'connecting') // ще чекаємо з'єднання
+    await ptt.release()
+    assert.equal(ptt.state.value, 'connecting')
 
-    startGate.resolve(true) // з'єднались
+    startGate.resolve(true)
     await pressPromise
 
     assert.equal(ptt.state.value, 'idle')
-    assert.deepEqual(results, ['か']) // розпізнало попри ранній реліз
+    assert.deepEqual(results, ['か'])
   })
 
   it('повторний press під час роботи ігнорується', async () => {
@@ -104,7 +103,7 @@ describe('usePushToTalk', () => {
       onResult: () => {},
     })
     await ptt.press()
-    await ptt.press() // вже listening → ігнор
+    await ptt.press()
     assert.equal(startCount, 1)
   })
 })

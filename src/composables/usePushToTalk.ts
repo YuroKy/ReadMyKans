@@ -3,13 +3,12 @@ import { ref, type Ref } from 'vue'
 export type PttState = 'idle' | 'connecting' | 'listening' | 'processing'
 
 export interface PushToTalkOptions {
-  /** Почати розпізнавання; повертає true, якщо реально слухаємо. */
   start: () => Promise<boolean>
-  /** Завершити й повернути розпізнаний текст (порожній — нічого не почули). */
+
   recognize: () => Promise<string>
-  /** Чи можна зараз починати (напр. не під час показу фідбеку). */
+
   canStart?: () => boolean
-  /** Викликається з непорожнім результатом. */
+
   onResult: (text: string) => void
 }
 
@@ -19,14 +18,6 @@ export interface PushToTalkController {
   release: () => Promise<void>
 }
 
-/**
- * Стейт-машина «тримай і кажи», незалежна від DOM і конкретного ASR.
- *
- * idle → (press) connecting → (start ok) listening → (release) processing → idle
- *
- * Коректно обробляє відпускання ПІД ЧАС підключення: дочекається з'єднання
- * і одразу розпізнає (а не зависне в connecting).
- */
 export const usePushToTalk = (opts: PushToTalkOptions): PushToTalkController => {
   const state = ref<PttState>('idle')
   let releaseRequested = false
@@ -62,7 +53,6 @@ export const usePushToTalk = (opts: PushToTalkOptions): PushToTalkController => 
       return
     }
 
-    // Якщо встигли відпустити під час підключення — одразу розпізнаємо
     if (releaseRequested) {
       await doRecognize()
     } else {
@@ -72,7 +62,7 @@ export const usePushToTalk = (opts: PushToTalkOptions): PushToTalkController => 
 
   const release = async () => {
     if (state.value === 'connecting') {
-      releaseRequested = true // розпізнаємо щойно під'єднаємось
+      releaseRequested = true
       return
     }
     if (state.value !== 'listening') return

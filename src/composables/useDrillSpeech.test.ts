@@ -2,7 +2,6 @@ import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { startDrillSpeech, isDrillSpeechSupported } from './useDrillSpeech'
 
-// Керований мок Web Speech API
 class MockRecognition {
   lang = ''
   continuous = false
@@ -34,9 +33,7 @@ class MockRecognition {
 }
 
 const setWindow = (ctor: unknown) => {
-  ;(globalThis as Record<string, unknown>).window = ctor
-    ? { SpeechRecognition: ctor }
-    : {}
+  ;(globalThis as Record<string, unknown>).window = ctor ? { SpeechRecognition: ctor } : {}
 }
 
 afterEach(() => {

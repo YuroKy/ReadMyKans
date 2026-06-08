@@ -108,15 +108,10 @@ const countMismatches = (segments: ComparisonSegment[]): number =>
   segments.filter((segment) => segment.type !== 'correct').length
 
 export const compareTexts = (original: string, spoken: string): ComparisonResult => {
-  // Конвертуємо кандзі+кану → читання в хірагані (якщо словник готовий),
-  // інакше повертається сирий текст. Це і є ключове виправлення:
-  // порівнюємо вимову, а не поверхневі символи.
   const normalizedOriginal = normalizeJapaneseText(toReadingHiragana(original))
   const normalizedSpoken = normalizeJapaneseText(toReadingHiragana(spoken))
   const segments = buildSegments(normalizedOriginal, normalizedSpoken)
 
-  // Точність рахуємо на рівні ромадзі — стійко до катакана/хірагана та
-  // фонетичних еквівалентів (じ/ぢ, ず/づ).
   const romajiOriginal = textToRomajiCompact(normalizedOriginal)
   const romajiSpoken = textToRomajiCompact(normalizedSpoken)
   const distance = levenshteinDistance(romajiOriginal, romajiSpoken)

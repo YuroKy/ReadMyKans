@@ -1,6 +1,12 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { kanaToRomaji, textToRomaji, textToRomajiCompact, kanaCharsEqual } from './romaji'
+import {
+  kanaToRomaji,
+  textToRomaji,
+  textToRomajiCompact,
+  kanaCharsEqual,
+  romajiToKana,
+} from './romaji'
 
 describe('kanaToRomaji', () => {
   it('базова хірагана', () => {
@@ -54,10 +60,30 @@ describe('kanaCharsEqual', () => {
 
   it('різні за вимовою — не рівні', () => {
     assert.equal(kanaCharsEqual('か', 'き'), false)
-    assert.equal(kanaCharsEqual('づ', 'ぢ'), false) // zu ≠ ji
+    assert.equal(kanaCharsEqual('づ', 'ぢ'), false)
   })
 
   it('не-кана без точного збігу — не рівні', () => {
     assert.equal(kanaCharsEqual('漢', '字'), false)
+  })
+})
+
+describe('romajiToKana', () => {
+  it('базові склади', () => {
+    assert.equal(romajiToKana('mu'), 'む')
+    assert.equal(romajiToKana('mo'), 'も')
+    assert.equal(romajiToKana('shi'), 'し')
+  })
+
+  it('нормалізує регістр і пробіли', () => {
+    assert.equal(romajiToKana(' MU '), 'む')
+  })
+
+  it('діграфи', () => {
+    assert.equal(romajiToKana('kya'), 'きゃ')
+  })
+
+  it('невідоме → порожньо', () => {
+    assert.equal(romajiToKana('xyz'), '')
   })
 })

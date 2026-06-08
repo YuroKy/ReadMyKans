@@ -98,7 +98,9 @@ const segmentTitle = (segment: ComparisonSegment) => segmentLabel[segment.type]
     </section>
 
     <section class="session-actions" aria-label="Подальші дії">
-      <button class="secondary-button" type="button" @click="emit('retry')">Спробувати ще раз</button>
+      <button class="secondary-button" type="button" @click="emit('retry')">
+        Спробувати ще раз
+      </button>
       <button class="ghost-button" type="button" @click="emit('edit')">Редагувати текст</button>
       <button class="primary-button" type="button" @click="emit('newSession')">Новий текст</button>
     </section>

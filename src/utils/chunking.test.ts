@@ -10,7 +10,10 @@ describe('chunkKana', () => {
   })
 
   it('по дві кани', () => {
-    assert.deepEqual(chunkKana(chars('むかしむ'), 2), [['む', 'か'], ['し', 'む']])
+    assert.deepEqual(chunkKana(chars('むかしむ'), 2), [
+      ['む', 'か'],
+      ['し', 'む'],
+    ])
   })
 
   it('останній неповний шматок зберігається', () => {
@@ -45,7 +48,7 @@ describe('checkRomajiAnswer', () => {
   it('правильна відповідь', () => {
     assert.equal(checkRomajiAnswer('む', 'mu'), true)
     assert.equal(checkRomajiAnswer('し', 'shi'), true)
-    assert.equal(checkRomajiAnswer('し', 'si'), true) // кунрей теж приймаємо
+    assert.equal(checkRomajiAnswer('し', 'si'), true)
   })
 
   it('неправильна відповідь', () => {

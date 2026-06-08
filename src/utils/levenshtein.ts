@@ -9,11 +9,7 @@ export const levenshteinDistance = (source: string, target: string): number => {
 
     for (let j = 1; j <= b.length; j += 1) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1
-      current[j] = Math.min(
-        previous[j]! + 1,
-        current[j - 1]! + 1,
-        previous[j - 1]! + cost,
-      )
+      current[j] = Math.min(previous[j]! + 1, current[j - 1]! + 1, previous[j - 1]! + cost)
     }
 
     previous = current

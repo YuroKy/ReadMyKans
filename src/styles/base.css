@@ -1450,6 +1450,82 @@ h3 {
   color: var(--muted);
 }
 
+/* Підказки емфази/плутанини на картці */
+.drill-cues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.drill-cue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.drill-cue.warn {
+  background: var(--amber);
+  color: var(--amber-strong);
+}
+
+.drill-cue.confuse {
+  background: var(--sky);
+  color: var(--sky-strong);
+}
+
+.drill-cue b {
+  font-size: 1.05rem;
+}
+
+/* Пояснення різниці у фідбеку */
+.drill-contrast {
+  margin: 6px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--ink);
+  max-width: 460px;
+}
+
+/* Проблемні кани на екрані завершення */
+.drill-weak {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.drill-weak-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.drill-weak-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--rose);
+}
+
+.drill-weak-chip strong {
+  font-size: 1.5rem;
+  color: var(--rose-strong);
+  line-height: 1.1;
+}
+
+.drill-weak-chip small {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 /* ── Recognition Progress ───────────────────────────────── */
 .recognition-progress {
   padding: 18px 22px;

@@ -14,7 +14,6 @@ describe('advanceMatch', () => {
   })
 
   it('продовжує від уже підтвердженого вказівника (from)', () => {
-    // підтверджено 2 (おじ), нова фраза містить продовження
     assert.equal(advanceMatch(chars('おじいさん'), chars('いさん'), 2), 5)
   })
 
@@ -24,7 +23,6 @@ describe('advanceMatch', () => {
   })
 
   it('толерантний до сміття всередині (пропускає зайві символи spoken)', () => {
-    // ASR вставив сміття "ほ" між кана
     assert.equal(advanceMatch(chars('おじいさん'), chars('おほじいさん'), 0), 5)
   })
 
@@ -33,7 +31,6 @@ describe('advanceMatch', () => {
   })
 
   it('стійкий до ковзного вікна: фраза без початку, старт із підтвердженого', () => {
-    // original: おじいさんが ; вже підтверджено 5 (おじいさん); вікно ASR з'їхало
     assert.equal(advanceMatch(chars('おじいさんが'), chars('さんが'), 5), 6)
   })
 
@@ -61,7 +58,6 @@ describe('advanceMatch', () => {
 
 describe('matchDetail', () => {
   it('повертає спробу = кану, вимовлену замість очікуваної', () => {
-    // очікувалось む (індекс 3), користувач сказав も замість む
     const d = matchDetail(chars('むかしむかし'), chars('もかし'), 3)
     assert.equal(d.matched, 3)
     assert.equal(d.attempt, 'も')
@@ -80,7 +76,6 @@ describe('matchDetail', () => {
   })
 
   it('частковий збіг → спроба = наступний нерозпізнаний символ', () => {
-    // む か збіглись, далі мало бути し, а сказали さ
     const d = matchDetail(chars('むかし'), chars('むかさ'), 0)
     assert.equal(d.matched, 2)
     assert.equal(d.attempt, 'さ')

@@ -14,7 +14,7 @@ const punctuationMap: Record<string, string> = {
   '：': ':',
   '；': ';',
   '〜': '~',
-  'ー': 'ー',
+  ー: 'ー',
 }
 
 const ignoredPunctuation = /[.,!?;:"'()[\]{}、。！？「」『』（）\s]/gu

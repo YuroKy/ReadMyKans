@@ -31,7 +31,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        # npm install (а не npm ci): rolldown-vite тягне @rolldown/binding-wasm32-wasi
+        # з @emnapi/*@1.10.0, які npm не завжди фіксує в lock крос-платформно, через що
+        # суворий `npm ci` падає на Linux. `npm install` резолвить їх наживо.
+        run: npm install --no-audit --no-fund
 
       - name: Run tests
         run: npm test

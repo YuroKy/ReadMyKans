@@ -123,11 +123,11 @@ const micLabel = computed(() => {
     case 'connecting':
       return 'Запуск мікрофона…'
     case 'listening':
-      return '🔴 Кажіть кану…'
+      return 'Кажіть кану…'
     case 'processing':
       return 'Обробка…'
     default:
-      return '🎤 Тримай і кажи'
+      return 'Натисни і скажи'
   }
 })
 
@@ -294,15 +294,26 @@ onMounted(() => focusInput())
         <span class="drill-or">або</span>
         <button
           type="button"
-          class="secondary-button drill-mic"
-          :class="{ active: micState === 'listening' }"
+          class="drill-mic"
+          :class="{ active: micState === 'listening', busy: micState === 'connecting' || micState === 'processing' }"
+          aria-label="Тримай і говори"
           @pointerdown.prevent="onMicPointerDown"
           @pointerup="micRelease"
           @pointercancel="micRelease"
         >
-          {{ micLabel }}
+          <svg class="drill-mic-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor" />
+            <path
+              d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </button>
-        <span class="drill-ptt-hint">Тримай кнопку, скажи кану, відпусти</span>
+        <span class="drill-mic-label">{{ micLabel }}</span>
+        <span class="drill-ptt-hint">Утримуй кнопку, скажи кану, відпусти</span>
       </div>
 
       <div v-if="!lastOutcome" class="drill-sub-actions">

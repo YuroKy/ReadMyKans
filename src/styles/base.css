@@ -1468,21 +1468,65 @@ h3 {
 }
 
 .drill-mic {
-  min-width: 240px;
-  min-height: 56px;
-  font-size: 1rem;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 0;
   background: var(--grad-primary);
   color: #ffffff;
   box-shadow: var(--shadow-pink);
   user-select: none;
   touch-action: none;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.2s ease;
+}
+
+.drill-mic:hover {
+  box-shadow: 0 18px 40px rgba(244, 95, 138, 0.42);
+}
+
+.drill-mic:active {
+  transform: scale(0.95);
+}
+
+.drill-mic-icon {
+  width: 42px;
+  height: 42px;
 }
 
 .drill-mic.active {
-  background: var(--grad-primary);
-  color: #ffffff;
-  box-shadow: 0 0 0 6px rgba(244, 95, 138, 0.18), var(--shadow-pink);
-  animation: mic-pulse 1.1s ease-in-out infinite;
+  animation: mic-ring 1.5s ease-out infinite;
+}
+
+.drill-mic.busy {
+  opacity: 0.8;
+}
+
+@keyframes mic-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 95, 138, 0.45), var(--shadow-pink);
+  }
+  70% {
+    box-shadow: 0 0 0 24px rgba(244, 95, 138, 0), var(--shadow-pink);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 95, 138, 0), var(--shadow-pink);
+  }
+}
+
+.drill-mic-label {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.drill-ptt {
+  gap: 12px;
+  margin: 6px 0;
 }
 
 .drill-ptt-hint {
@@ -1749,4 +1793,50 @@ h3 {
 
 .asr-status-detail:last-child {
   margin-bottom: 0;
+}
+
+/* ── Mobile refinements (placed last so they override base rules) ─────────── */
+@media (max-width: 620px) {
+  .drill-input-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .drill-input-row .primary-button {
+    width: 100%;
+  }
+
+  .drill-mic {
+    width: 116px;
+    height: 116px;
+  }
+
+  .drill-mic-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .drill-kana {
+    font-size: clamp(5rem, 32vw, 8rem);
+  }
+
+  .drill-card {
+    padding: 26px 18px;
+  }
+
+  .drill-hero,
+  .drill-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .drill-size {
+    min-width: 0;
+  }
+
+  .recognition-progress,
+  .live-kana-panel,
+  .session-grid {
+    padding: 18px;
+  }
 }

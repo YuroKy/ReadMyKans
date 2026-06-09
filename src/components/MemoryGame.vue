@@ -310,4 +310,18 @@ onBeforeUnmount(() => {
   text-align: center;
   padding: 32px 24px;
 }
+
+/* Трек перемикача й відкрита картка вище жорстко світлі; в темній темі
+   --ink/--muted стають світлими, тож їм потрібна темна поверхня. */
+[data-theme='dark'] .seg {
+  background: #2c2640;
+}
+
+[data-theme='dark'] .seg button.active {
+  background: #403858;
+}
+
+[data-theme='dark'] .memory-card.flipped {
+  background: #2c2640;
+}
 </style>

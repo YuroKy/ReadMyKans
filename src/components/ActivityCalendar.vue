@@ -32,7 +32,7 @@ const cellTitle = (date: string, count: number) =>
         <p class="eyebrow">Активність</p>
         <h2>Останні {{ WEEKS }} тижнів</h2>
       </div>
-      <div class="mastery-score">
+      <div class="panel-score">
         <strong>{{ total }}</strong>
         <span>активних днів</span>
       </div>
@@ -78,6 +78,11 @@ const cellTitle = (date: string, count: number) =>
 .calendar-panel {
   display: grid;
   gap: 12px;
+}
+
+/* Внутрішній gap панелі вже розділяє блоки — глобальний margin зайвий. */
+.calendar-panel .section-heading {
+  margin-bottom: 0;
 }
 
 .cal-scroll {

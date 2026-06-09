@@ -26,7 +26,7 @@ const tierClass = (kana: string): string => {
         <p class="eyebrow">Прогрес</p>
         <h2>Опанування кани</h2>
       </div>
-      <div class="mastery-score">
+      <div class="panel-score">
         <strong>{{ summary.masteredPct }}%</strong>
         <span>засвоєно</span>
       </div>
@@ -64,23 +64,6 @@ const tierClass = (kana: string): string => {
 </template>
 
 <style scoped>
-.mastery-score {
-  display: grid;
-  justify-items: end;
-  line-height: 1.1;
-}
-
-.mastery-score strong {
-  font-size: 1.6rem;
-  color: var(--primary);
-}
-
-.mastery-score span {
-  font-size: 0.75rem;
-  color: var(--muted);
-  font-weight: 600;
-}
-
 .mastery-legend {
   display: flex;
   flex-wrap: wrap;

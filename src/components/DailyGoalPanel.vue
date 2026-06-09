@@ -68,6 +68,11 @@ const save = () => {
   gap: 14px;
 }
 
+/* Внутрішній gap панелі вже розділяє блоки — глобальний margin зайвий. */
+.daily-panel .section-heading {
+  margin-bottom: 0;
+}
+
 .daily-body {
   display: flex;
   align-items: center;

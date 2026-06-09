@@ -30,7 +30,7 @@ const avg = computed(() =>
         <p class="eyebrow">Динаміка</p>
         <h2>Точність читання</h2>
       </div>
-      <div v-if="values.length" class="mastery-score">
+      <div v-if="values.length" class="panel-score">
         <strong>{{ last }}%</strong>
         <span>остання</span>
       </div>
@@ -71,6 +71,11 @@ const avg = computed(() =>
 .trend-panel {
   display: grid;
   gap: 12px;
+}
+
+/* Внутрішній gap панелі вже розділяє блоки — глобальний margin зайвий. */
+.trend-panel .section-heading {
+  margin-bottom: 0;
 }
 
 .trend-svg {

@@ -194,11 +194,35 @@ button:not(:disabled) {
 .text-input-panel,
 .upload-panel,
 .kana-stats,
+.kana-mastery,
+.daily-panel,
+.achievements-panel,
+.calendar-panel,
+.trend-panel,
 .reference-panel,
 .history-panel,
 .reading-card,
 .review-panel {
   padding: 22px;
+}
+
+/* Число-підсумок у правому куті заголовка панелі (rang «N/9 відкрито» тощо). */
+.panel-score {
+  display: grid;
+  justify-items: end;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.panel-score strong {
+  font-size: 1.6rem;
+  color: var(--primary);
+}
+
+.panel-score span {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .section-heading {

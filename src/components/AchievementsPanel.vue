@@ -22,7 +22,7 @@ const items = computed(() =>
         <p class="eyebrow">Досягнення</p>
         <h2>Бейджі</h2>
       </div>
-      <div class="mastery-score">
+      <div class="panel-score">
         <strong>{{ unlockedCount }}/{{ total }}</strong>
         <span>відкрито</span>
       </div>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import FileUploadPanel from './components/FileUploadPanel.vue'
 import KanaReferenceTable from './components/KanaReferenceTable.vue'
 import KanaDrill from './components/KanaDrill.vue'
+import KanaMasteryPanel from './components/KanaMasteryPanel.vue'
 import KanaStatsPanel from './components/KanaStatsPanel.vue'
 import ReadingSession from './components/ReadingSession.vue'
 import ResultReview from './components/ResultReview.vue'
@@ -162,6 +163,7 @@ const newSession = () => {
 
         <aside class="side-column">
           <KanaStatsPanel :analysis="kanaAnalysis" />
+          <KanaMasteryPanel />
           <KanaReferenceTable />
           <SessionHistory :history="history" @clear="clearHistory" />
           <DataPanel />

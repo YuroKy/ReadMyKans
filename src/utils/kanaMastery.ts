@@ -23,3 +23,31 @@ export const masteryLabel: Record<MasteryTier, string> = {
 }
 
 export const MASTERY_TIERS: MasteryTier[] = ['mastered', 'learning', 'weak', 'untouched']
+
+export interface MasterySummary {
+  mastered: number
+  learning: number
+  weak: number
+  untouched: number
+  total: number
+  masteredPct: number
+}
+
+// Counts how many of `allKana` fall into each mastery tier, plus the share that
+// is fully mastered. `allKana` is the universe to report on (e.g. the gojūon
+// grid), so untouched kana are counted too.
+export const masterySummary = (
+  stats: Record<string, MasteryStat>,
+  allKana: string[],
+): MasterySummary => {
+  const counts: Record<MasteryTier, number> = { mastered: 0, learning: 0, weak: 0, untouched: 0 }
+  for (const kana of allKana) {
+    counts[classifyMastery(stats[kana])] += 1
+  }
+  const total = allKana.length
+  return {
+    ...counts,
+    total,
+    masteredPct: total === 0 ? 0 : Math.round((counts.mastered / total) * 100),
+  }
+}

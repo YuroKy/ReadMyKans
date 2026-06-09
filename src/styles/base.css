@@ -2430,6 +2430,39 @@ h3 {
   color: #5b5470;
 }
 
+/* ── Mastery tier colours (shared: KanaReferenceTable + KanaMasteryPanel) ──
+   Placed after the dark-theme `.kana-table span` rule so equal-specificity
+   cell colours win by source order in both light and dark themes. */
+.mastery-mastered {
+  --swatch: #bfe9d8;
+}
+.mastery-learning {
+  --swatch: #cfe2fb;
+}
+.mastery-weak {
+  --swatch: #f9c7d2;
+}
+.mastery-untouched {
+  --swatch: #efe7ee;
+}
+
+.kana-table span.mastery-mastered {
+  background: #bfe9d8;
+  color: #1c6b52;
+}
+.kana-table span.mastery-learning {
+  background: #cfe2fb;
+  color: #2c5b8a;
+}
+.kana-table span.mastery-weak {
+  background: #f9c7d2;
+  color: #9e3043;
+}
+.kana-table span.mastery-untouched {
+  background: #efe7ee;
+  color: var(--muted);
+}
+
 [data-theme='dark'] .text-area:focus,
 [data-theme='dark'] .manual-textarea:focus {
   background: #322b47;

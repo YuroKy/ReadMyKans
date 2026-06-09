@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import FileUploadPanel from './components/FileUploadPanel.vue'
 import KanaReferenceTable from './components/KanaReferenceTable.vue'
 import KanaDrill from './components/KanaDrill.vue'
@@ -9,7 +9,10 @@ import ResultReview from './components/ResultReview.vue'
 import SakuraDecor from './components/SakuraDecor.vue'
 import SessionHistory from './components/SessionHistory.vue'
 import TextInputPanel from './components/TextInputPanel.vue'
+import DataPanel from './components/DataPanel.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
+import { useTheme } from './composables/useTheme'
+import { useStreak } from './composables/useStreak'
 import type { AppView, SessionResult, UploadedFileInfo } from './types'
 import { analyzeKana } from './utils/kana'
 import { initReading } from './utils/reading'
@@ -24,6 +27,18 @@ const uploadError = ref('')
 const fileInfo = ref<UploadedFileInfo | null>(null)
 const latestResult = ref<SessionResult | null>(null)
 const { history, addSession, clearHistory } = useSessionHistory()
+
+const { theme, toggleTheme } = useTheme()
+const { state: streak, recordActivity } = useStreak()
+onMounted(recordActivity)
+
+const streakWord = (n: number) => {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'день'
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'дні'
+  return 'днів'
+}
 
 const kanaAnalysis = computed(() => analyzeKana(sourceText.value))
 
@@ -86,7 +101,24 @@ const newSession = () => {
         <span class="brand-mark">か</span>
         <span>Kana Reader</span>
       </a>
-      <span class="topbar-note">Тренування читання японської кани</span>
+      <div class="topbar-actions">
+        <span
+          v-if="streak.streak > 0"
+          class="streak-badge"
+          :title="`Сьогодні активностей: ${streak.todayCount}`"
+        >
+          🔥 {{ streak.streak }} {{ streakWord(streak.streak) }}
+        </span>
+        <span class="topbar-note">Тренування читання японської кани</span>
+        <button
+          class="theme-toggle"
+          type="button"
+          :aria-label="theme === 'dark' ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'"
+          @click="toggleTheme"
+        >
+          {{ theme === 'dark' ? '☀️' : '🌙' }}
+        </button>
+      </div>
     </header>
 
     <main v-if="view === 'setup'" class="setup-layout">
@@ -120,6 +152,7 @@ const newSession = () => {
           <KanaStatsPanel :analysis="kanaAnalysis" />
           <KanaReferenceTable />
           <SessionHistory :history="history" @clear="clearHistory" />
+          <DataPanel />
         </aside>
       </div>
     </main>

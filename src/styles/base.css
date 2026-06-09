@@ -2260,3 +2260,149 @@ h3 {
 .site-footer .footer-sep {
   opacity: 0.5;
 }
+
+/* ── Topbar controls (streak + theme) ───────────────────── */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: var(--amber-strong);
+  font-weight: 800;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Dark theme ─────────────────────────────────────────── */
+[data-theme='dark'] {
+  color-scheme: dark;
+  color: #f1ecf7;
+  --ink: #f1ecf7;
+  --muted: #ab9fc4;
+  --panel: #241f33;
+  --line: #3b3454;
+  --divider: #332e49;
+  --primary: #ff7ba3;
+  --primary-hover: #ff93b4;
+  --mint: #1f3a37;
+  --mint-strong: #4fc7a8;
+  --mint-hover: #6fd6bb;
+  --rose: #3c2331;
+  --rose-strong: #ff8095;
+  --sky: #20304c;
+  --sky-strong: #7aa8e0;
+  --lavender: #b7a0f0;
+  --amber: #3a3119;
+  --amber-strong: #e0b257;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --shadow-pink: 0 14px 30px rgba(244, 95, 138, 0.3);
+}
+
+[data-theme='dark'] body {
+  background:
+    radial-gradient(1200px 480px at 88% -8%, rgba(168, 140, 232, 0.14), transparent 60%),
+    radial-gradient(900px 420px at 6% 4%, rgba(255, 123, 163, 0.1), transparent 58%),
+    linear-gradient(180deg, #18141f 0%, #1c1828 40%, #201b2d 100%);
+}
+
+/* Hero panels */
+[data-theme='dark'] .intro-panel,
+[data-theme='dark'] .session-hero,
+[data-theme='dark'] .result-summary,
+[data-theme='dark'] .result-header {
+  background:
+    radial-gradient(640px 320px at 92% 120%, rgba(168, 140, 232, 0.18), transparent 60%),
+    linear-gradient(130deg, #2a2138 0%, #241f33 46%, #2a2342 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Inset surfaces (cards, chips, inputs) */
+[data-theme='dark'] .mini-stat,
+[data-theme='dark'] .counter-row span,
+[data-theme='dark'] .frequency-list span,
+[data-theme='dark'] .tiny-kana-list span,
+[data-theme='dark'] .kana-chip,
+[data-theme='dark'] .review-kana-list span,
+[data-theme='dark'] .file-summary,
+[data-theme='dark'] .upload-dropzone,
+[data-theme='dark'] .kana-table span,
+[data-theme='dark'] .history-item,
+[data-theme='dark'] .source-text,
+[data-theme='dark'] .transcript-box,
+[data-theme='dark'] .comparison-line,
+[data-theme='dark'] .current-kana-card,
+[data-theme='dark'] .spoken-kana-card,
+[data-theme='dark'] .drill-kana-chip,
+[data-theme='dark'] .confusion-row,
+[data-theme='dark'] .last-fragment,
+[data-theme='dark'] .session-clock,
+[data-theme='dark'] .mic-status,
+[data-theme='dark'] .text-area,
+[data-theme='dark'] .manual-textarea,
+[data-theme='dark'] .mic-select {
+  background: #2c2640;
+  color: var(--ink);
+}
+
+[data-theme='dark'] .kana-table .blank {
+  background: #241f33;
+  color: #5b5470;
+}
+
+[data-theme='dark'] .text-area:focus,
+[data-theme='dark'] .manual-textarea:focus {
+  background: #322b47;
+}
+
+/* Muted body text that was hard-coded for the light theme */
+[data-theme='dark'] .intro-panel p:not(.eyebrow),
+[data-theme='dark'] .result-subtitle,
+[data-theme='dark'] .romaji-text,
+[data-theme='dark'] .last-fragment,
+[data-theme='dark'] .difficulty-legend li {
+  color: #cabfe2;
+}
+
+/* Donut / ring holes follow the panel colour */
+[data-theme='dark'] .accuracy-ring {
+  background:
+    radial-gradient(circle at center, var(--panel) 57%, transparent 58%),
+    conic-gradient(#ff7ba3 var(--score), #3b3454 0);
+}
+
+[data-theme='dark'] .difficulty-donut {
+  background:
+    radial-gradient(circle at center, var(--panel) 56%, transparent 57%),
+    var(--donut, conic-gradient(var(--divider) 0 100%));
+}
+
+[data-theme='dark'] .brand-mark {
+  background: #2c2640;
+}

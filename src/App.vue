@@ -190,14 +190,6 @@ const newSession = () => {
 
     <footer class="site-footer">
       <span>© 2026 Yurii Fedelesh · ReadMyKans</span>
-      <span class="footer-sep" aria-hidden="true">·</span>
-      <a
-        href="https://github.com/YuroKy/ReadMyKans"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Вихідний код (AGPL-3.0)
-      </a>
     </footer>
 
     <div v-if="needRefresh" class="update-toast" role="status">

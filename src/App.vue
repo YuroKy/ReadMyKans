@@ -13,6 +13,8 @@ import TextInputPanel from './components/TextInputPanel.vue'
 import DataPanel from './components/DataPanel.vue'
 import DailyGoalPanel from './components/DailyGoalPanel.vue'
 import AchievementsPanel from './components/AchievementsPanel.vue'
+import ActivityCalendar from './components/ActivityCalendar.vue'
+import AccuracyTrend from './components/AccuracyTrend.vue'
 import SprintSession from './components/SprintSession.vue'
 import MemoryGame from './components/MemoryGame.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
@@ -232,7 +234,9 @@ const newSession = () => {
           <DailyGoalPanel />
           <KanaMasteryPanel />
           <AchievementsPanel />
+          <ActivityCalendar />
           <KanaReferenceTable />
+          <AccuracyTrend :history="history" />
           <SessionHistory :history="history" @clear="clearHistory" />
           <DataPanel />
         </aside>

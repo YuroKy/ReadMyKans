@@ -9,6 +9,7 @@ const KEYS = [
   'kana-achievements',
   'kana-formats-seen',
   'kana-drill-format',
+  'kana-activity',
 ]
 
 export interface ExportBundle {

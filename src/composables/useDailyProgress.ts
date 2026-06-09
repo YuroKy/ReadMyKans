@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { useActivityLog } from './useActivityLog'
 
 export interface DailyState {
   date: string // YYYY-MM-DD
@@ -45,6 +46,8 @@ const persist = () => {
 }
 
 export const useDailyProgress = () => {
+  const { recordToday } = useActivityLog()
+
   // Reading these reflects the live day, so the ring resets at midnight without
   // a reload once any activity happens.
   const today = computed(() => rollDay(state.value, todayString()))
@@ -62,6 +65,7 @@ export const useDailyProgress = () => {
     const wasReached = before.count >= before.goal
     state.value = addToday(state.value, todayString(), n)
     persist()
+    recordToday(n) // keep the long-term activity history in sync
     return !wasReached && state.value.count >= state.value.goal
   }
 

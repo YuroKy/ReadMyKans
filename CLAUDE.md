@@ -94,6 +94,13 @@ ReadMyKans/
 ### Порівняння (useTextComparison)
 `compareTexts` → нормалізація читання + романі-толерантний Levenshtein; повертає точність, сегменти, кану для повторення.
 
+### Гейміфікація
+- **Денна ціль** (`useDailyProgress`, ключ `kana-daily`): лічильник реальних відповідей за день + ціль. `add(n)` повертає `true`, коли щойно перетнули ціль (один тост). Незалежна від стріку. Хук — `useDrillDeck.handleOutcome` + `App.handleSessionFinished` + ігри.
+- **Ачивки** (`utils/achievements.ts` — каталог + `evaluate(snapshot)`; `useAchievements.sync()` — diff проти `kana-achievements`). `useProgressSnapshot.build()` збирає снапшот зі stores. `App.syncAchievements()` кличеться на межах сесій/ігор/mount і тостить нові.
+- **Спідран** (view `sprint`, `useSprint` + `utils/sprint.ts`): 60 с, нескінченна випадкова подача, рахунок=правильні, рекорд у `useBestScores` (`sprint:overall`).
+- **Пари** (view `memory`, `utils/memoryGame.ts` + `MemoryGame.vue`): хіра↔ката / кана↔ромадзі, рекорд за ходами (`recordLow`).
+- **Тости** — спільний `useToasts` (singleton-черга), хост у `App.vue`. Усі нові ключі localStorage додані в `useDataTransfer.KEYS`.
+
 ---
 
 ## Тести й CI

@@ -1090,6 +1090,14 @@ h3 {
   align-items: center;
 }
 
+/* Лейбл над селектом — спільний для дрила, спідрану й гри «Пари» */
+.drill-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
 /* Select — стиль під textarea/inputs в проекті */
 .mic-select {
   flex: 1;

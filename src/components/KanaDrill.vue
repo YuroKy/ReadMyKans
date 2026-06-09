@@ -270,13 +270,6 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   box-shadow: var(--shadow);
 }
 
-.drill-source {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 200px;
-}
-
 .drill-mode-note {
   margin: 0;
   padding: 12px 18px;

@@ -197,6 +197,7 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 14px;
   justify-items: start;
+  padding: 24px;
 }
 
 .memory-options {
@@ -243,6 +244,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   font-size: 0.95rem;
   color: var(--muted);
+  padding: 14px 24px;
 }
 
 .memory-hud strong {

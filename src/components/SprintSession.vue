@@ -140,6 +140,7 @@ const exit = () => {
   display: grid;
   gap: 14px;
   justify-items: start;
+  padding: 24px;
 }
 
 .sprint-play {
@@ -230,6 +231,12 @@ const exit = () => {
 
 .sprint-feedback.bad {
   color: var(--rose-strong);
+}
+
+/* Плитки вище жорстко білі; в темній темі --ink світлий, тож без
+   темної поверхні кана на плитках була б невидимою. */
+[data-theme='dark'] .sprint-tile {
+  background: #2c2640;
 }
 
 .sprint-result {

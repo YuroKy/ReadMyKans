@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Kana Reader">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe9f0" />
+      <stop offset="0.5" stop-color="#fff4f7" />
+      <stop offset="1" stop-color="#f3f0ff" />
+    </linearGradient>
+    <radialGradient id="lav" cx="0.92" cy="1.05" r="0.7">
+      <stop offset="0" stop-color="#a88ce8" stop-opacity="0.32" />
+      <stop offset="0.7" stop-color="#a88ce8" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#f45f8a" />
+      <stop offset="1" stop-color="#a88ce8" />
+    </linearGradient>
+    <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#ffe3ec" />
+    </linearGradient>
+    <g id="blossom">
+      <g fill="url(#petal)" stroke="#ffd0de" stroke-width="3" stroke-linejoin="round">
+        <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" />
+        <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(72)" />
+        <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(144)" />
+        <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(216)" />
+        <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(288)" />
+      </g>
+      <circle r="30" fill="#ffd36e" />
+      <g fill="#ffb24d">
+        <circle cx="0" cy="-14" r="5" />
+        <circle cx="13" cy="-4" r="5" transform="rotate(72)" />
+        <circle cx="13" cy="-4" r="5" transform="rotate(144)" />
+        <circle cx="13" cy="-4" r="5" transform="rotate(216)" />
+        <circle cx="13" cy="-4" r="5" transform="rotate(288)" />
+      </g>
+    </g>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#lav)" />
+
+  <!-- decorative blossoms -->
+  <use href="#blossom" transform="translate(1010 250) scale(1.7) rotate(-12)" />
+  <use href="#blossom" transform="translate(835 470) scale(1.0) rotate(18)" opacity="0.92" />
+  <use href="#blossom" transform="translate(1120 540) scale(0.7) rotate(8)" opacity="0.8" />
+  <use href="#blossom" transform="translate(150 545) scale(0.5) rotate(-20)" opacity="0.5" />
+
+  <!-- text -->
+  <text x="92" y="212" font-family="'Segoe UI','Plus Jakarta Sans',Arial,sans-serif" font-size="30" font-weight="800" letter-spacing="6" fill="#f45f8a">ПРАКТИКА ВГОЛОС</text>
+  <text x="88" y="330" font-family="'Segoe UI','Plus Jakarta Sans',Arial,sans-serif" font-size="118" font-weight="800" fill="url(#title)">Kana Reader</text>
+  <text x="92" y="412" font-family="'Segoe UI','Plus Jakarta Sans',Arial,sans-serif" font-size="38" font-weight="600" fill="#46545f">Тренування читання японської</text>
+  <text x="92" y="462" font-family="'Segoe UI','Plus Jakarta Sans',Arial,sans-serif" font-size="38" font-weight="600" fill="#46545f">кани вголос — хіраґана й катакана</text>
+
+  <!-- kana chips -->
+  <g font-family="'Segoe UI',Arial,sans-serif" font-size="34" font-weight="700" fill="#46545f">
+    <rect x="92" y="510" width="64" height="58" rx="18" fill="#fdeef3" />
+    <text x="124" y="550" text-anchor="middle">あ</text>
+    <rect x="168" y="510" width="64" height="58" rx="18" fill="#fdeef3" />
+    <text x="200" y="550" text-anchor="middle">い</text>
+    <rect x="244" y="510" width="64" height="58" rx="18" fill="#fdeef3" />
+    <text x="276" y="550" text-anchor="middle">う</text>
+  </g>
+</svg>

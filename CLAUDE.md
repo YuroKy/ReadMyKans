@@ -101,6 +101,10 @@ ReadMyKans/
 - **Пари** (view `memory`, `utils/memoryGame.ts` + `MemoryGame.vue`): хіра↔ката / кана↔ромадзі, рекорд за ходами (`recordLow`).
 - **Тости** — спільний `useToasts` (singleton-черга), хост у `App.vue`. Усі нові ключі localStorage додані в `useDataTransfer.KEYS`.
 
+### Аналітика
+- **Хітмапа активності** (`useActivityLog` — `kana-activity` date→count, бампиться з `useDailyProgress.add`; `utils/calendar.ts` — `buildCalendar` сітка тижнів; `ActivityCalendar.vue`).
+- **Графік точності** (`utils/trend.ts` — `sparkline`/`polyline`/`areaPath`; `AccuracyTrend.vue` бере `history` пропом, рендерить SVG-спарклайн точності читань).
+
 ---
 
 ## Тести й CI

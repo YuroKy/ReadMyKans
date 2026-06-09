@@ -11,6 +11,7 @@ import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
 import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
+import { track } from '../utils/analytics'
 
 export type DrillFormat = 'recognition' | 'dictation' | 'choice' | 'writing'
 export type DrillOutcome = 'correct' | 'wrong'
@@ -185,6 +186,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // Remember which formats have been tried (feeds the «all formats» achievement).
   const { mark: markFormatSeen } = useFormatsSeen()
   watch(format, (value) => markFormatSeen(value), { immediate: true })
+  watch(format, (value) => track('drill-format-change', { format: value }))
 
   // --- Summary ---------------------------------------------------------------
   const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))
@@ -192,6 +194,18 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     total.value === 0 ? 0 : Math.round((correctCount.value / total.value) * 100),
   )
   const headline = computed(() => encouragement(accuracy.value))
+
+  // Деку кінець — фіксуємо, як саме тренувались і з яким результатом.
+  watch(isFinished, (finished) => {
+    if (finished && total.value > 0) {
+      track('drill-finish', {
+        format: format.value,
+        source: drillMode.value,
+        cards: total.value,
+        accuracy: accuracy.value,
+      })
+    }
+  })
 
   const difficulty = computed(() => analyzeKanaDifficulty(sourceText.value))
   const difficultyTiers = computed(() => {

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { track } from '../utils/analytics'
 
 export type Theme = 'light' | 'dark'
 
@@ -33,7 +34,11 @@ export const useTheme = () => {
     apply(next)
   }
 
-  const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')
+  const toggleTheme = () => {
+    const next = theme.value === 'dark' ? 'light' : 'dark'
+    track('theme-toggle', { theme: next })
+    setTheme(next)
+  }
 
   apply(theme.value)
 

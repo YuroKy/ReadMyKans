@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { buildKanaSets, findKanaSet } from '../utils/kanaSets'
 import { buildDeck, isMatch, type MemoryCard, type MemoryMode } from '../utils/memoryGame'
+import { track } from '../utils/analytics'
 import { useBestScores } from '../composables/useBestScores'
 import { useDailyProgress } from '../composables/useDailyProgress'
 import { useToasts } from '../composables/useToasts'
@@ -51,6 +52,7 @@ const start = () => {
   status.value = 'playing'
   stopTimer()
   timer = setInterval(() => (elapsed.value += 1), 1000)
+  track('memory-start', { set: selectedSetId.value, mode: mode.value, pairs: pairs.value })
 }
 
 const isFlipped = (i: number) => flipped.value.includes(i)
@@ -83,6 +85,13 @@ const win = () => {
   stopTimer()
   status.value = 'won'
   isNewRecord.value = recordLow(bestKey.value, moves.value)
+  track('memory-win', {
+    mode: mode.value,
+    pairs: pairs.value,
+    moves: moves.value,
+    seconds: elapsed.value,
+    newRecord: isNewRecord.value,
+  })
 }
 
 const backToSetup = () => {

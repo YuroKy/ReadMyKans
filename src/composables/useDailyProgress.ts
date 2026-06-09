@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { useActivityLog } from './useActivityLog'
+import { track } from '../utils/analytics'
 
 export interface DailyState {
   date: string // YYYY-MM-DD
@@ -66,7 +67,9 @@ export const useDailyProgress = () => {
     state.value = addToday(state.value, todayString(), n)
     persist()
     recordToday(n) // keep the long-term activity history in sync
-    return !wasReached && state.value.count >= state.value.goal
+    const crossed = !wasReached && state.value.count >= state.value.goal
+    if (crossed) track('daily-goal-reached', { goal: state.value.goal })
+    return crossed
   }
 
   const updateGoal = (next: number) => {

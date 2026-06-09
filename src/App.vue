@@ -29,6 +29,7 @@ import { usePwaInstall } from './composables/usePwaInstall'
 import { usePwaUpdate } from './composables/usePwaUpdate'
 import type { AppView, SessionResult, UploadedFileInfo } from './types'
 import { analyzeKana } from './utils/kana'
+import { track } from './utils/analytics'
 import { initReading } from './utils/reading'
 import { DEFAULT_STORY } from './data/defaultStory'
 
@@ -67,6 +68,7 @@ const syncAchievements = () => {
   for (const id of syncAchievementsStore(buildSnapshot())) {
     const achievement = achievementById(id)
     if (achievement) {
+      track('achievement-unlock', { achievement: id })
       pushToast({
         icon: achievement.icon,
         title: `Досягнення: ${achievement.title}`,
@@ -99,6 +101,9 @@ const startReading = () => {
 
   setupError.value = ''
   latestResult.value = null
+  track('reading-start', {
+    kana: kanaAnalysis.value.hiraganaCount + kanaAnalysis.value.katakanaCount,
+  })
   view.value = 'reading'
 }
 
@@ -108,6 +113,7 @@ const startDrill = () => {
     return
   }
   setupError.value = ''
+  track('drill-start')
   view.value = 'drill'
 }
 
@@ -126,15 +132,26 @@ const handleFileLoaded = (text: string, info: UploadedFileInfo) => {
   fileInfo.value = info
   uploadError.value = ''
   setupError.value = ''
+  track('file-upload', { chars: [...text].length })
 }
 
 const handleSessionFinished = (result: SessionResult) => {
   latestResult.value = result
   addSession(result)
+  track('reading-finish', {
+    accuracy: Math.round(result.accuracy),
+    kana: result.originalLength,
+    seconds: Math.round(result.durationMs / 1000),
+  })
   // A finished reading session is worth a few cards toward today's goal.
   if (dailyAdd(3)) pushToast(GOAL_TOAST)
   syncAchievements()
   view.value = 'result'
+}
+
+const installApp = async () => {
+  const accepted = await promptInstall()
+  track('pwa-install', { outcome: accepted ? 'accepted' : 'dismissed' })
 }
 
 const retryLatest = () => {
@@ -185,7 +202,7 @@ const newSession = () => {
           v-if="canInstall"
           class="install-button"
           type="button"
-          @click="promptInstall"
+          @click="installApp"
         >
           ⬇ Встановити
         </button>

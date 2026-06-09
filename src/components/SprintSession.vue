@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { buildKanaSets, findKanaSet } from '../utils/kanaSets'
 import { useSprint } from '../composables/useSprint'
+import { track } from '../utils/analytics'
 import SakuraDecor from './SakuraDecor.vue'
 
 const emit = defineEmits<{ exit: []; finish: [] }>()
@@ -32,7 +33,18 @@ const {
 
 // Let App reconcile achievements (e.g. «sprint 30+») when a run ends.
 watch(status, (s) => {
-  if (s === 'finished') emit('finish')
+  if (s === 'running') {
+    track('sprint-start', { set: selectedSetId.value })
+  }
+  if (s === 'finished') {
+    track('sprint-finish', {
+      set: selectedSetId.value,
+      score: score.value,
+      bestCombo: bestCombo.value,
+      newRecord: isNewRecord.value,
+    })
+    emit('finish')
+  }
 })
 
 const exit = () => {

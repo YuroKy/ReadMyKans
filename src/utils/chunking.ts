@@ -9,6 +9,20 @@ export const chunkKana = (kana: string[], size: number): string[][] => {
   return chunks
 }
 
+// Chunk kana word by word so a chunk never crosses a word boundary. A word
+// shorter than `size` yields a single chunk of its actual length (so size 5 on
+// a 3-kana word shows 3); use a very large size for a «whole word» mode.
+export const chunkKanaByWords = (words: string[][], size: number): string[][] => {
+  const n = Math.max(1, Math.floor(size))
+  const chunks: string[][] = []
+  for (const word of words) {
+    for (let i = 0; i < word.length; i += n) {
+      chunks.push(word.slice(i, i + n))
+    }
+  }
+  return chunks
+}
+
 const KUNREI_TO_HEPBURN: Array<[string, string]> = [
   ['sya', 'sha'],
   ['syu', 'shu'],

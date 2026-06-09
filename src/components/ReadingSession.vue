@@ -5,8 +5,16 @@ import { useSpeechRecognition } from '../composables/useSpeechRecognition'
 import { useTextComparison } from '../composables/useTextComparison'
 import { advanceMatch, matchDetail } from '../utils/matching'
 import { kanaCharsEqual, kanaToRomaji } from '../utils/romaji'
-import { initReading, readingLoading, readingReady, toReadingHiragana } from '../utils/reading'
+import {
+  initReading,
+  readingLoading,
+  readingReady,
+  toReadingHiragana,
+  tokenizeReadings,
+} from '../utils/reading'
+import { toRubySegments } from '../utils/furigana'
 import { normalizeJapaneseText } from '../utils/textNormalize'
+import { useShadowing } from '../composables/useShadowing'
 import MicrophoneStatus from './MicrophoneStatus.vue'
 import SakuraDecor from './SakuraDecor.vue'
 
@@ -32,6 +40,15 @@ const {
   reset,
 } = useSpeechRecognition()
 const { compareTexts } = useTextComparison()
+
+const shadow = useShadowing(computed(() => props.sourceText))
+const furiganaMode = ref<'off' | 'furigana' | 'romaji'>('off')
+const rubySegments = computed(() => {
+  void readingReady.value
+  const mode = furiganaMode.value
+  if (mode === 'off') return []
+  return toRubySegments(tokenizeReadings(props.sourceText), mode)
+})
 
 const manualTranscript = ref('')
 const startedAt = ref(Date.now())
@@ -252,6 +269,69 @@ onBeforeUnmount(() => {
     </section>
 
     <MicrophoneStatus :status="status" :supported="isSupported" :message="errorMessage" />
+
+    <section class="panel reading-aids">
+      <div class="aids-row">
+        <div class="aid-block">
+          <span class="eyebrow">Слухай і повторюй</span>
+          <div class="shadow-controls">
+            <button
+              class="ghost-button small"
+              type="button"
+              :disabled="!shadow.supported"
+              @click="shadow.toggle()"
+            >
+              {{ shadow.isPlaying.value ? '⏹ Стоп' : '🔊 Прослухати' }}
+            </button>
+            <label class="shadow-rate">
+              <span>Темп</span>
+              <input
+                v-model.number="shadow.rate.value"
+                type="range"
+                min="0.5"
+                max="1.3"
+                step="0.1"
+                class="mic-gain-slider"
+                :disabled="!shadow.supported"
+              />
+            </label>
+          </div>
+          <p v-if="!shadow.supported" class="aid-note">
+            Синтез мовлення недоступний у цьому браузері.
+          </p>
+        </div>
+
+        <div class="aid-block">
+          <span class="eyebrow">Підказки читання</span>
+          <div class="furigana-toggle">
+            <button type="button" :class="{ active: furiganaMode === 'off' }" @click="furiganaMode = 'off'">
+              Вимк.
+            </button>
+            <button
+              type="button"
+              :class="{ active: furiganaMode === 'furigana' }"
+              @click="furiganaMode = 'furigana'"
+            >
+              ふりがな
+            </button>
+            <button
+              type="button"
+              :class="{ active: furiganaMode === 'romaji' }"
+              @click="furiganaMode = 'romaji'"
+            >
+              ромадзі
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="furiganaMode !== 'off'" class="furigana-text" lang="ja">
+        <ruby v-for="(seg, i) in rubySegments" :key="i"
+          >{{ seg.base }}<rt v-if="seg.ruby">{{ seg.ruby }}</rt></ruby
+        >
+      </p>
+    </section>
+
     <p v-if="readingLoading && !readingReady" class="reading-note">
       ⏳ Завантаження словника читань (кандзі → кана)… порівняння стане точнішим за мить.
     </p>
@@ -404,3 +484,94 @@ onBeforeUnmount(() => {
     </section>
   </main>
 </template>
+
+<style scoped>
+.reading-aids {
+  padding: 18px 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.aids-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.aid-block {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.shadow-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.shadow-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.shadow-rate input {
+  width: 120px;
+}
+
+.aid-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--amber-strong);
+}
+
+.furigana-toggle {
+  display: inline-flex;
+  border-radius: 999px;
+  background: #fff3f6;
+  padding: 3px;
+  gap: 2px;
+}
+
+.furigana-toggle button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.furigana-toggle button.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.furigana-text {
+  margin: 0;
+  border-radius: 18px;
+  background: #fff3f6;
+  padding: 18px 18px 8px;
+  font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.5rem;
+  line-height: 2.6;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.furigana-text rt {
+  font-size: 0.5em;
+  color: var(--primary);
+  font-weight: 700;
+}
+</style>

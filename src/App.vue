@@ -13,6 +13,8 @@ import DataPanel from './components/DataPanel.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
 import { useTheme } from './composables/useTheme'
 import { useStreak } from './composables/useStreak'
+import { usePwaInstall } from './composables/usePwaInstall'
+import { usePwaUpdate } from './composables/usePwaUpdate'
 import type { AppView, SessionResult, UploadedFileInfo } from './types'
 import { analyzeKana } from './utils/kana'
 import { initReading } from './utils/reading'
@@ -30,6 +32,8 @@ const { history, addSession, clearHistory } = useSessionHistory()
 
 const { theme, toggleTheme } = useTheme()
 const { state: streak, recordActivity } = useStreak()
+const { canInstall, promptInstall } = usePwaInstall()
+const { needRefresh, refresh } = usePwaUpdate()
 onMounted(recordActivity)
 
 const streakWord = (n: number) => {
@@ -111,6 +115,14 @@ const newSession = () => {
         </span>
         <span class="topbar-note">Тренування читання японської кани</span>
         <button
+          v-if="canInstall"
+          class="install-button"
+          type="button"
+          @click="promptInstall"
+        >
+          ⬇ Встановити
+        </button>
+        <button
           class="theme-toggle"
           type="button"
           :aria-label="theme === 'dark' ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'"
@@ -185,5 +197,10 @@ const newSession = () => {
         Вихідний код (AGPL-3.0)
       </a>
     </footer>
+
+    <div v-if="needRefresh" class="update-toast" role="status">
+      <span>🌸 Доступна нова версія</span>
+      <button class="update-toast-action" type="button" @click="refresh">Оновити</button>
+    </div>
   </div>
 </template>

@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import './styles/base.css'
-import { registerSW } from 'virtual:pwa-register'
 
-registerSW({ immediate: true })
+// Service worker registration is handled reactively by usePwaUpdate()
+// (virtual:pwa-register/vue) so the app can show an update toast.
 
 createApp(App).mount('#app')

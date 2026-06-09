@@ -52,7 +52,9 @@ export default defineConfig(({ command }) => ({
     vue(),
     serveDictRaw(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (not 'autoUpdate') so a new version waits for the user to tap
+      // «Оновити» in the toast instead of silently reloading mid-session.
+      registerType: 'prompt',
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Kana Reader',

@@ -2406,3 +2406,29 @@ h3 {
 [data-theme='dark'] .brand-mark {
   background: #2c2640;
 }
+
+/* White-background buttons need a dark surface so their text stays readable */
+[data-theme='dark'] .ghost-button {
+  background: #2c2640;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+
+[data-theme='dark'] .ghost-button:hover {
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+
+[data-theme='dark'] .speaker-button {
+  background: #2c2640;
+  color: var(--primary);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .speaker-button:hover:not(:disabled) {
+  box-shadow:
+    inset 0 0 0 1px var(--primary),
+    0 14px 26px rgba(0, 0, 0, 0.4);
+}

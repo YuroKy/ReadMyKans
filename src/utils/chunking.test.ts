@@ -1,6 +1,12 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { chunkKana, normalizeRomaji, checkRomajiAnswer, checkKanaAnswer } from './chunking'
+import {
+  chunkKana,
+  chunkKanaByWords,
+  normalizeRomaji,
+  checkRomajiAnswer,
+  checkKanaAnswer,
+} from './chunking'
 
 const chars = (s: string) => [...s]
 
@@ -23,6 +29,36 @@ describe('chunkKana', () => {
   it('некоректний size зводиться до ≥1', () => {
     assert.equal(chunkKana(chars('むか'), 0).length, 2)
     assert.equal(chunkKana(chars('むか'), -3).length, 2)
+  })
+})
+
+describe('chunkKanaByWords', () => {
+  const words = (...ws: string[]) => ws.map((w) => [...w])
+
+  it('не перетинає межі слів', () => {
+    assert.deepEqual(chunkKanaByWords(words('むか', 'しき'), 5), [
+      ['む', 'か'],
+      ['し', 'き'],
+    ])
+  })
+
+  it('коротке слово показується цілком (size 5, слово з 3 → 3)', () => {
+    assert.deepEqual(chunkKanaByWords(words('むかし'), 5), [['む', 'か', 'し']])
+  })
+
+  it('довге слово ріжеться всередині слова', () => {
+    assert.deepEqual(chunkKanaByWords(words('むかしむか'), 2), [
+      ['む', 'か'],
+      ['し', 'む'],
+      ['か'],
+    ])
+  })
+
+  it('режим «ціле слово» (велика size) → одне слово = один шматок', () => {
+    assert.deepEqual(chunkKanaByWords(words('むかしむか', 'き'), 999), [
+      ['む', 'か', 'し', 'む', 'か'],
+      ['き'],
+    ])
   })
 })
 

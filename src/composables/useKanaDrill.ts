@@ -1,18 +1,23 @@
 import { computed, ref, type Ref } from 'vue'
 import { isKana } from '../utils/kana'
 import { toReadingHiragana, readingReady } from '../utils/reading'
-import { chunkKana, checkKanaAnswer, checkRomajiAnswer } from '../utils/chunking'
+import { chunkKanaByWords, checkKanaAnswer, checkRomajiAnswer } from '../utils/chunking'
 import { kanaToRomaji } from '../utils/romaji'
 
 export type DrillOutcome = 'correct' | 'wrong'
 
 export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) => {
-  const allKana = computed(() => {
+  // Split the source into words (by whitespace, incl. the full-width spaces the
+  // texts use) and read each one, so chunks never cross a word boundary.
+  const words = computed(() => {
     void readingReady.value
-    return [...toReadingHiragana(sourceText.value)].filter(isKana)
+    return sourceText.value
+      .split(/\s+/u)
+      .map((word) => [...toReadingHiragana(word)].filter(isKana))
+      .filter((word) => word.length > 0)
   })
 
-  const chunks = computed(() => chunkKana(allKana.value, chunkSize.value))
+  const chunks = computed(() => chunkKanaByWords(words.value, chunkSize.value))
   const total = computed(() => chunks.value.length)
 
   const index = ref(0)

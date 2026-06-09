@@ -21,6 +21,10 @@ const props = defineProps<{ sourceText: string }>()
 const emit = defineEmits<{ exit: [] }>()
 
 const chunkSize = ref(1)
+const WHOLE_WORD = 6
+const effectiveChunkSize = computed(() =>
+  chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value,
+)
 const drillMode = ref('text')
 const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
 const sourceRef = computed(() => {
@@ -46,7 +50,7 @@ const {
   next,
   retry,
   reset,
-} = useKanaDrill(sourceRef, chunkSize)
+} = useKanaDrill(sourceRef, effectiveChunkSize)
 
 const answer = ref('')
 const revealed = ref(false)
@@ -199,6 +203,7 @@ const speak = () => {
 
 const chunkLabel = computed(() => {
   const n = chunkSize.value
+  if (n >= WHOLE_WORD) return 'Слово'
   if (n === 1) return '1 кана'
   if (n >= 2 && n <= 4) return `${n} кани`
   return `${n} кан`
@@ -273,7 +278,7 @@ onMounted(() => focusInput())
           <input
             type="range"
             min="1"
-            max="5"
+            max="6"
             step="1"
             v-model.number="chunkSize"
             class="mic-gain-slider"

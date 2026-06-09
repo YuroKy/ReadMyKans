@@ -68,3 +68,26 @@ export const toReadingHiragana = (text: string): string => {
     })
     .join('')
 }
+
+export interface ReadingToken {
+  surface: string
+  reading: string
+}
+
+// Per-token surface + hiragana reading (for furigana overlays). Reading is ''
+// when kuromoji has no real reading (kana/punctuation) or the dictionary is not
+// loaded yet — callers decide whether to render ruby.
+export const tokenizeReadings = (text: string): ReadingToken[] => {
+  if (!text) return []
+  if (!tokenizer) return [{ surface: text, reading: '' }]
+
+  return tokenizer.tokenize(text).map((token) => {
+    const kana =
+      token.pronunciation && token.pronunciation !== '*'
+        ? token.pronunciation
+        : token.reading && token.reading !== '*'
+          ? token.reading
+          : ''
+    return { surface: token.surface_form, reading: kana ? katakanaToHiragana(kana) : '' }
+  })
+}

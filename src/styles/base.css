@@ -2300,6 +2300,60 @@ h3 {
   transform: translateY(-1px);
 }
 
+.install-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.install-button:hover {
+  transform: translateY(-1px);
+  background: var(--primary-hover);
+}
+
+/* ── Update toast (new service-worker version available) ── */
+.update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px 12px 20px;
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.update-toast-action {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  transition: background 160ms ease;
+}
+
+.update-toast-action:hover {
+  background: var(--primary-hover);
+}
+
 /* ── Dark theme ─────────────────────────────────────────── */
 [data-theme='dark'] {
   color-scheme: dark;
@@ -2374,6 +2428,39 @@ h3 {
 [data-theme='dark'] .kana-table .blank {
   background: #241f33;
   color: #5b5470;
+}
+
+/* ── Mastery tier colours (shared: KanaReferenceTable + KanaMasteryPanel) ──
+   Placed after the dark-theme `.kana-table span` rule so equal-specificity
+   cell colours win by source order in both light and dark themes. */
+.mastery-mastered {
+  --swatch: #bfe9d8;
+}
+.mastery-learning {
+  --swatch: #cfe2fb;
+}
+.mastery-weak {
+  --swatch: #f9c7d2;
+}
+.mastery-untouched {
+  --swatch: #efe7ee;
+}
+
+.kana-table span.mastery-mastered {
+  background: #bfe9d8;
+  color: #1c6b52;
+}
+.kana-table span.mastery-learning {
+  background: #cfe2fb;
+  color: #2c5b8a;
+}
+.kana-table span.mastery-weak {
+  background: #f9c7d2;
+  color: #9e3043;
+}
+.kana-table span.mastery-untouched {
+  background: #efe7ee;
+  color: var(--muted);
 }
 
 [data-theme='dark'] .text-area:focus,

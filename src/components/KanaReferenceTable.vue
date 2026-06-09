@@ -121,35 +121,6 @@ const tierClass = (kana: string): string => {
   background: var(--swatch, #fdeef3);
 }
 
-/* Tier colours (shared by legend swatch + grid cells) */
-.mastery-mastered {
-  --swatch: #bfe9d8;
-}
-.mastery-learning {
-  --swatch: #cfe2fb;
-}
-.mastery-weak {
-  --swatch: #f9c7d2;
-}
-.mastery-untouched {
-  --swatch: #efe7ee;
-}
-
-/* Grid cells: scoped class beats base `.kana-table span` background */
-.kana-table span.mastery-mastered {
-  background: #bfe9d8;
-  color: #1c6b52;
-}
-.kana-table span.mastery-learning {
-  background: #cfe2fb;
-  color: #2c5b8a;
-}
-.kana-table span.mastery-weak {
-  background: #f9c7d2;
-  color: #9e3043;
-}
-.kana-table span.mastery-untouched {
-  background: #efe7ee;
-  color: var(--muted);
-}
+/* Tier colours (swatch vars + grid cells) are global in base.css so the
+   KanaMasteryPanel can reuse them. */
 </style>

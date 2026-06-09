@@ -281,7 +281,7 @@ onBeforeUnmount(() => {
               :disabled="!shadow.supported"
               @click="shadow.toggle()"
             >
-              {{ shadow.isPlaying.value ? '⏹ Стоп' : '🔊 Прослухати' }}
+              {{ shadow.isPlaying.value ? '⏹ Стоп' : '🔊 Весь текст' }}
             </button>
             <label class="shadow-rate">
               <span>Темп</span>
@@ -296,6 +296,39 @@ onBeforeUnmount(() => {
               />
             </label>
           </div>
+
+          <div v-if="shadow.supported && shadow.hasSegments.value" class="shadow-steps">
+            <div class="shadow-steps-head">
+              <span class="shadow-steps-pos"
+                >Речення {{ shadow.currentIndex.value + 1 }} / {{ shadow.segments.value.length }}</span
+              >
+              <div class="shadow-steps-buttons">
+                <button
+                  class="ghost-button small"
+                  type="button"
+                  :disabled="shadow.currentIndex.value === 0"
+                  aria-label="Попереднє речення"
+                  @click="shadow.prev()"
+                >
+                  ◀
+                </button>
+                <button class="secondary-button small" type="button" @click="shadow.repeat()">
+                  🔁 Повторити
+                </button>
+                <button
+                  class="ghost-button small"
+                  type="button"
+                  :disabled="shadow.currentIndex.value >= shadow.segments.value.length - 1"
+                  aria-label="Наступне речення"
+                  @click="shadow.next()"
+                >
+                  ⏭
+                </button>
+              </div>
+            </div>
+            <p class="shadow-sentence" lang="ja">{{ shadow.currentSegment.value }}</p>
+          </div>
+
           <p v-if="!shadow.supported" class="aid-note">
             Синтез мовлення недоступний у цьому браузері.
           </p>
@@ -522,6 +555,50 @@ onBeforeUnmount(() => {
 
 .shadow-rate input {
   width: 120px;
+}
+
+.shadow-steps {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff3f6;
+}
+
+.shadow-steps-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shadow-steps-pos {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.shadow-steps-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shadow-steps-buttons .secondary-button.small,
+.shadow-steps-buttons .ghost-button.small {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.shadow-sentence {
+  margin: 0;
+  font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: var(--ink);
+  word-break: break-word;
 }
 
 .aid-note {

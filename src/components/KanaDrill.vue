@@ -9,7 +9,8 @@ import {
 } from '../composables/useDrillSpeech'
 import { usePushToTalk } from '../composables/usePushToTalk'
 import { useKanaStats, isWeak, topConfusion } from '../composables/useKanaStats'
-import { isKana } from '../utils/kana'
+import { useSrsSchedule } from '../composables/useSrsSchedule'
+import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { kanaToRomaji, romajiToKana } from '../utils/romaji'
 import { kanaContrast } from '../utils/kanaContrast'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
@@ -27,12 +28,30 @@ const effectiveChunkSize = computed(() =>
 )
 const drillMode = ref('text')
 const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
+
+// SRS daily-review queue. The queue is snapshotted when the «srs» mode is
+// entered (and on restart) so answering a card — which reschedules it — does
+// not reshuffle the deck mid-session. srsRecord updates the persistent schedule
+// for future days regardless of the current drill mode.
+const { record: srsRecord, due: srsDue } = useSrsSchedule()
+const SRS_UNIVERSE = [...HIRAGANA_ROWS.flat(), ...KATAKANA_ROWS.flat()].filter(Boolean)
+const srsSnapshot = ref('')
+const srsDueCount = computed(() => srsDue(SRS_UNIVERSE).length)
+const refreshSrsSnapshot = () => {
+  srsSnapshot.value = srsDue(SRS_UNIVERSE).join('')
+}
+const srsEmpty = computed(() => drillMode.value === 'srs' && srsSnapshot.value.length === 0)
+
 const sourceRef = computed(() => {
+  if (drillMode.value === 'srs') return srsSnapshot.value
   const generated = effectiveKana.value
   return generated && generated.length > 0 ? generated : props.sourceText
 })
 const modeFellBack = computed(
-  () => drillMode.value !== 'text' && !(effectiveKana.value && effectiveKana.value.length > 0),
+  () =>
+    drillMode.value !== 'text' &&
+    drillMode.value !== 'srs' &&
+    !(effectiveKana.value && effectiveKana.value.length > 0),
 )
 
 const {
@@ -74,6 +93,7 @@ watch(chunkSize, () => {
 })
 
 watch(drillMode, () => {
+  if (drillMode.value === 'srs') refreshSrsSnapshot()
   reset()
   answer.value = ''
   revealed.value = false
@@ -91,6 +111,7 @@ const isSingleKana = computed(() => currentChunk.value.length === 1)
 const recordStat = (outcome: 'correct' | 'wrong', confusedKana: string) => {
   if (!isSingleKana.value) return
   const kana = expectedKana.value
+  srsRecord(kana, outcome === 'correct')
   if (outcome === 'correct') {
     stats.record(kana, true)
     lastConfused.value = ''
@@ -179,6 +200,7 @@ const skip = () => {
 }
 
 const restart = () => {
+  if (drillMode.value === 'srs') refreshSrsSnapshot()
   reset()
   answer.value = ''
   revealed.value = false
@@ -260,12 +282,16 @@ onMounted(() => focusInput())
       <div>
         <p class="eyebrow">Урок кани</p>
         <h1>Практика кани</h1>
+        <span v-if="drillMode === 'srs'" class="srs-due-badge">
+          🔁 На сьогодні: {{ srsDueCount }}
+        </span>
       </div>
       <div class="drill-controls">
         <label class="drill-source">
           <span class="eyebrow">Джерело</span>
           <select v-model="drillMode" class="mic-select">
             <option value="text">Весь текст</option>
+            <option value="srs">Повторення на сьогодні</option>
             <option value="weak">Слабкі кани</option>
             <option value="confusions">Мої плутанини</option>
             <optgroup label="Набори">
@@ -293,7 +319,7 @@ onMounted(() => focusInput())
       твої слабкі кани та плутанини.
     </p>
 
-    <section v-if="!isFinished" class="panel drill-progress">
+    <section v-if="!isFinished && !srsEmpty" class="panel drill-progress">
       <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
       <strong>{{ correctCount }} правильних</strong>
     </section>
@@ -411,7 +437,7 @@ onMounted(() => focusInput())
     </template>
 
     <section
-      v-else
+      v-else-if="!srsEmpty"
       class="panel drill-card"
       :class="{ correct: lastOutcome === 'correct', wrong: lastOutcome === 'wrong' }"
     >
@@ -518,6 +544,16 @@ onMounted(() => focusInput())
         </span>
       </div>
     </section>
+
+    <section v-else class="panel srs-empty">
+      <SakuraDecor density="rich" />
+      <h2>🌸 На сьогодні нічого повторювати</h2>
+      <p>
+        Ти повторив усю заплановану на сьогодні кану. Обери інший режим джерела вище або повертайся
+        завтра — інтервальне повторення підбере, що пора освіжити.
+      </p>
+      <button class="secondary-button" type="button" @click="emit('exit')">До тексту</button>
+    </section>
   </main>
 </template>
 
@@ -537,5 +573,37 @@ onMounted(() => focusInput())
   color: var(--sky-strong);
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.srs-due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--mint-strong);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.srs-empty {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  padding: 36px 24px;
+}
+
+.srs-empty h2 {
+  margin: 0;
+}
+
+.srs-empty p {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--muted);
 }
 </style>

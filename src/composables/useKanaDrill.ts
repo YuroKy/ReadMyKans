@@ -55,6 +55,13 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     return outcome
   }
 
+  // Record an outcome the caller has already decided (e.g. the writing format,
+  // where correctness comes from trace coverage rather than text matching).
+  const submitOutcome = (outcome: DrillOutcome, answer = ''): DrillOutcome => {
+    record(outcome, answer)
+    return outcome
+  }
+
   const next = () => {
     lastOutcome.value = null
     lastAnswer.value = ''
@@ -86,6 +93,7 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     lastAnswer,
     submitRomaji,
     submitKana,
+    submitOutcome,
     next,
     retry,
     reset,

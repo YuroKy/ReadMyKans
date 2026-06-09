@@ -14,6 +14,7 @@ import {
 } from '../utils/reading'
 import { toRubySegments } from '../utils/furigana'
 import { normalizeJapaneseText } from '../utils/textNormalize'
+import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import { useShadowing } from '../composables/useShadowing'
 import MicrophoneStatus from './MicrophoneStatus.vue'
 import SakuraDecor from './SakuraDecor.vue'
@@ -174,32 +175,10 @@ const formattedElapsed = computed(() => {
   return `${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`
 })
 
-const speechSynthesisSupported = computed(
-  () => typeof window !== 'undefined' && 'speechSynthesis' in window,
-)
+const speechSynthesisSupported = computed(() => isSpeechSynthesisSupported())
 
 const speakCurrentKana = () => {
-  const text = liveFeedback.value.expected
-
-  if (!text || !speechSynthesisSupported.value) {
-    return
-  }
-
-  const utterance = new SpeechSynthesisUtterance(text)
-  const japaneseVoice = window.speechSynthesis
-    .getVoices()
-    .find((voice) => voice.lang.toLowerCase().startsWith('ja'))
-
-  utterance.lang = 'ja-JP'
-  utterance.rate = 0.75
-  utterance.pitch = 1
-
-  if (japaneseVoice) {
-    utterance.voice = japaneseVoice
-  }
-
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(utterance)
+  speakKana(liveFeedback.value.expected, { rate: 0.75, pitch: 1 })
 }
 
 const restart = () => {

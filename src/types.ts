@@ -1,6 +1,6 @@
 export type SessionStatus = 'idle' | 'listening' | 'paused' | 'finished' | 'error'
 
-export type AppView = 'setup' | 'reading' | 'result' | 'drill'
+export type AppView = 'setup' | 'reading' | 'result' | 'drill' | 'sprint' | 'memory'
 
 export interface UploadedFileInfo {
   name: string

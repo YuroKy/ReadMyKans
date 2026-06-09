@@ -1,4 +1,15 @@
-const KEYS = ['kana-stats', 'kana-reader-history', 'kana-srs', 'kana-streak', 'kana-theme']
+const KEYS = [
+  'kana-stats',
+  'kana-reader-history',
+  'kana-srs',
+  'kana-streak',
+  'kana-theme',
+  'kana-daily',
+  'kana-best',
+  'kana-achievements',
+  'kana-formats-seen',
+  'kana-drill-format',
+]
 
 export interface ExportBundle {
   app: 'ReadMyKans'

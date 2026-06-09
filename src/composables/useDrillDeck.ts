@@ -3,6 +3,9 @@ import { useKanaDrill } from './useKanaDrill'
 import { useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
+import { useDailyProgress } from './useDailyProgress'
+import { useFormatsSeen } from './useFormatsSeen'
+import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
@@ -110,8 +113,15 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     }
   }
 
-  // Auto-advance after a correct answer (same 800ms beat across formats).
+  const dailyProgress = useDailyProgress()
+  const toasts = useToasts()
+
+  // Auto-advance after a correct answer (same 800ms beat across formats). Every
+  // answered card counts toward the daily goal; crossing it celebrates once.
   const handleOutcome = (outcome: DrillOutcome) => {
+    if (dailyProgress.add(1)) {
+      toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
+    }
     if (outcome !== 'correct') return
     window.setTimeout(() => {
       if (!isFinished.value) next()
@@ -171,6 +181,10 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   watch(index, () => {
     lastConfused.value = ''
   })
+
+  // Remember which formats have been tried (feeds the «all formats» achievement).
+  const { mark: markFormatSeen } = useFormatsSeen()
+  watch(format, (value) => markFormatSeen(value), { immediate: true })
 
   // --- Summary ---------------------------------------------------------------
   const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))

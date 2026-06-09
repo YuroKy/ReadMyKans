@@ -78,6 +78,12 @@ describe('normalizeRomaji', () => {
     assert.equal(normalizeRomaji('shi'), 'shi')
     assert.equal(normalizeRomaji('tsu'), 'tsu')
   })
+
+  it('стягує довгі голосні (тире, подвоєння, макрон)', () => {
+    assert.equal(normalizeRomaji('oji-sanga'), 'ojisanga')
+    assert.equal(normalizeRomaji('ojiisanga'), 'ojisanga')
+    assert.equal(normalizeRomaji('ojīsanga'), 'ojisanga')
+  })
 })
 
 describe('checkRomajiAnswer', () => {
@@ -94,6 +100,19 @@ describe('checkRomajiAnswer', () => {
   it('шматок із кількох кан', () => {
     assert.equal(checkRomajiAnswer('むか', 'muka'), true)
     assert.equal(checkRomajiAnswer('むか', 'muki'), false)
+  })
+
+  it('довгий голосний (ー) приймається з тире, без нього і подвоєним', () => {
+    assert.equal(checkRomajiAnswer('おじーさんが', 'oji-sanga'), true)
+    assert.equal(checkRomajiAnswer('おじーさんが', 'ojisanga'), true)
+    assert.equal(checkRomajiAnswer('おじーさんが', 'ojiisanga'), true)
+    assert.equal(checkRomajiAnswer('おじーさんが', 'okisanga'), false)
+  })
+
+  it('довгий голосний у катакані (ラーメン)', () => {
+    assert.equal(checkRomajiAnswer('ラーメン', 'ramen'), true)
+    assert.equal(checkRomajiAnswer('ラーメン', 'raamen'), true)
+    assert.equal(checkRomajiAnswer('ラーメン', 'ra-men'), true)
   })
 })
 

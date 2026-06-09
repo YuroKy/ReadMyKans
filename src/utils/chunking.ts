@@ -43,15 +43,25 @@ const KUNREI_TO_HEPBURN: Array<[string, string]> = [
 ]
 
 export const normalizeRomaji = (input: string): string => {
-  let r = input.toLowerCase().replace(/[\s'’\-_]/g, '')
+  let r = input
+    .toLowerCase()
+    // strip spaces, apostrophes, macrons and the long-vowel hyphen (ー → "-")
+    .replace(/[\s'’\-_]/g, '')
+    .replace(/ā/g, 'a')
+    .replace(/ī/g, 'i')
+    .replace(/ū/g, 'u')
+    .replace(/ē/g, 'e')
+    .replace(/[ōô]/g, 'o')
   for (const [kunrei, hepburn] of KUNREI_TO_HEPBURN) {
     r = r.split(kunrei).join(hepburn)
   }
-  return r
+  // Collapse long vowels so a chōonpu (ー) matches whether the learner wrote it
+  // as a hyphen, omitted it, or doubled the vowel (ojiisan = oji-san = ojisan).
+  return r.replace(/([aeiou])\1+/g, '$1')
 }
 
 export const checkRomajiAnswer = (expectedKana: string, answer: string): boolean =>
-  normalizeRomaji(answer) === textToRomajiCompact(expectedKana)
+  normalizeRomaji(answer) === normalizeRomaji(textToRomajiCompact(expectedKana))
 
 export const checkKanaAnswer = (expected: string[], spoken: string[]): boolean => {
   if (spoken.length < expected.length) return false

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useKanaDrill } from '../composables/useKanaDrill'
+import { useDrillSource } from '../composables/useDrillSource'
 import {
   startDrillSpeech,
   isDrillSpeechSupported,
@@ -20,7 +21,15 @@ const props = defineProps<{ sourceText: string }>()
 const emit = defineEmits<{ exit: [] }>()
 
 const chunkSize = ref(1)
-const sourceRef = computed(() => props.sourceText)
+const drillMode = ref('text')
+const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
+const sourceRef = computed(() => {
+  const generated = effectiveKana.value
+  return generated && generated.length > 0 ? generated : props.sourceText
+})
+const modeFellBack = computed(
+  () => drillMode.value !== 'text' && !(effectiveKana.value && effectiveKana.value.length > 0),
+)
 
 const {
   total,
@@ -53,6 +62,14 @@ watch(index, () => {
 })
 
 watch(chunkSize, () => {
+  reset()
+  answer.value = ''
+  revealed.value = false
+  sessionPairs.value = []
+  focusInput()
+})
+
+watch(drillMode, () => {
   reset()
   answer.value = ''
   revealed.value = false
@@ -240,6 +257,17 @@ onMounted(() => focusInput())
         <h1>Практика кани</h1>
       </div>
       <div class="drill-controls">
+        <label class="drill-source">
+          <span class="eyebrow">Джерело</span>
+          <select v-model="drillMode" class="mic-select">
+            <option value="text">Весь текст</option>
+            <option value="weak">Слабкі кани</option>
+            <option value="confusions">Мої плутанини</option>
+            <optgroup label="Набори">
+              <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
+            </optgroup>
+          </select>
+        </label>
         <label class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
@@ -254,6 +282,11 @@ onMounted(() => focusInput())
         <button class="ghost-button small" type="button" @click="emit('exit')">Вийти</button>
       </div>
     </section>
+
+    <p v-if="modeFellBack" class="drill-mode-note">
+      Для цього режиму ще немає даних — тренуємо весь текст. Пограйся трохи, і тут зʼявляться
+      твої слабкі кани та плутанини.
+    </p>
 
     <section v-if="!isFinished" class="panel drill-progress">
       <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
@@ -482,3 +515,22 @@ onMounted(() => focusInput())
     </section>
   </main>
 </template>
+
+<style scoped>
+.drill-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.drill-mode-note {
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: var(--sky);
+  color: var(--sky-strong);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+</style>

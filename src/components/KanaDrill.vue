@@ -1,279 +1,48 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useKanaDrill } from '../composables/useKanaDrill'
-import { useDrillSource } from '../composables/useDrillSource'
-import {
-  startDrillSpeech,
-  isDrillSpeechSupported,
-  type DrillSpeechSession,
-} from '../composables/useDrillSpeech'
-import { usePushToTalk } from '../composables/usePushToTalk'
-import { useKanaStats, isWeak, topConfusion } from '../composables/useKanaStats'
-import { useSrsSchedule } from '../composables/useSrsSchedule'
-import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
-import { kanaToRomaji, romajiToKana } from '../utils/romaji'
-import { kanaContrast } from '../utils/kanaContrast'
-import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
-import { collectConfusionPairs } from '../utils/confusions'
-import { encouragement } from '../utils/encouragement'
+import { toRef } from 'vue'
+import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
+import { kanaToRomaji } from '../utils/romaji'
+import DrillRecognitionCard from './DrillRecognitionCard.vue'
+import DrillDictationCard from './DrillDictationCard.vue'
+import DrillChoiceCard from './DrillChoiceCard.vue'
+import DrillWritingCard from './DrillWritingCard.vue'
 import SakuraDecor from './SakuraDecor.vue'
 
 const props = defineProps<{ sourceText: string }>()
 const emit = defineEmits<{ exit: [] }>()
 
-const chunkSize = ref(1)
-const WHOLE_WORD = 6
-const effectiveChunkSize = computed(() =>
-  chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value,
-)
-const drillMode = ref('text')
-const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
-
-// SRS daily-review queue. The queue is snapshotted when the «srs» mode is
-// entered (and on restart) so answering a card — which reschedules it — does
-// not reshuffle the deck mid-session. srsRecord updates the persistent schedule
-// for future days regardless of the current drill mode.
-const { record: srsRecord, due: srsDue } = useSrsSchedule()
-const SRS_UNIVERSE = [...HIRAGANA_ROWS.flat(), ...KATAKANA_ROWS.flat()].filter(Boolean)
-const srsSnapshot = ref('')
-const srsDueCount = computed(() => srsDue(SRS_UNIVERSE).length)
-const refreshSrsSnapshot = () => {
-  srsSnapshot.value = srsDue(SRS_UNIVERSE).join('')
-}
-const srsEmpty = computed(() => drillMode.value === 'srs' && srsSnapshot.value.length === 0)
-
-const sourceRef = computed(() => {
-  if (drillMode.value === 'srs') return srsSnapshot.value
-  const generated = effectiveKana.value
-  return generated && generated.length > 0 ? generated : props.sourceText
-})
-const modeFellBack = computed(
-  () =>
-    drillMode.value !== 'text' &&
-    drillMode.value !== 'srs' &&
-    !(effectiveKana.value && effectiveKana.value.length > 0),
-)
-
+const deck = useDrillDeck(toRef(props, 'sourceText'))
 const {
+  format,
+  chunkSize,
+  isSingleKanaFormat,
+  chunkLabel,
+  drillMode,
+  kanaSets,
+  modeFellBack,
+  srsDueCount,
+  srsEmpty,
   total,
   index,
-  currentChunk,
-  expectedKana,
-  expectedRomaji,
   isFinished,
   correctCount,
-  lastOutcome,
-  lastAnswer,
-  submitRomaji,
-  submitKana,
-  next,
-  retry,
-  reset,
-} = useKanaDrill(sourceRef, effectiveChunkSize)
+  wrongCount,
+  accuracy,
+  headline,
+  difficulty,
+  difficultyTiers,
+  donutGradient,
+  drillConfusions,
+  weakSummary,
+  restart,
+} = deck
 
-const answer = ref('')
-const revealed = ref(false)
-const inputEl = ref<HTMLInputElement | null>(null)
-
-const focusInput = () => nextTick(() => inputEl.value?.focus())
-
-watch(index, () => {
-  answer.value = ''
-  revealed.value = false
-  lastConfused.value = ''
-  focusInput()
-})
-
-watch(chunkSize, () => {
-  reset()
-  answer.value = ''
-  revealed.value = false
-  sessionPairs.value = []
-  focusInput()
-})
-
-watch(drillMode, () => {
-  if (drillMode.value === 'srs') refreshSrsSnapshot()
-  reset()
-  answer.value = ''
-  revealed.value = false
-  sessionPairs.value = []
-  focusInput()
-})
-
-const stats = useKanaStats()
-
-const lastConfused = ref('')
-const sessionPairs = ref<Array<[string, string]>>([])
-
-const isSingleKana = computed(() => currentChunk.value.length === 1)
-
-const recordStat = (outcome: 'correct' | 'wrong', confusedKana: string) => {
-  if (!isSingleKana.value) return
-  const kana = expectedKana.value
-  srsRecord(kana, outcome === 'correct')
-  if (outcome === 'correct') {
-    stats.record(kana, true)
-    lastConfused.value = ''
-  } else {
-    const confused = confusedKana && confusedKana !== kana ? confusedKana : ''
-    stats.record(kana, false, confused || undefined)
-    lastConfused.value = confused
-    if (confused) sessionPairs.value.push([kana, confused])
-  }
-}
-
-const handleOutcome = (outcome: 'correct' | 'wrong') => {
-  if (outcome === 'correct') {
-    window.setTimeout(() => {
-      if (!isFinished.value) next()
-      else lastOutcome.value = null
-    }, 800)
-  }
-}
-
-const submit = () => {
-  if (lastOutcome.value || !answer.value.trim()) return
-  const outcome = submitRomaji(answer.value)
-  recordStat(outcome, romajiToKana(answer.value))
-  handleOutcome(outcome)
-}
-
-const micSupported = isDrillSpeechSupported()
-let session: DrillSpeechSession | null = null
-
-const {
-  state: micState,
-  press: micPress,
-  release: micRelease,
-} = usePushToTalk({
-  start: () => {
-    session = startDrillSpeech()
-    return session.started
-  },
-  recognize: async () => {
-    if (!session) return ''
-    session.stop()
-    const text = await session.result
-    session = null
-    return text
-  },
-  canStart: () => !lastOutcome.value && micSupported,
-  onResult: (text) => {
-    const outcome = submitKana(text)
-    const firstKana = [...text].filter(isKana)[0] ?? ''
-    recordStat(outcome, firstKana)
-    handleOutcome(outcome)
-  },
-})
-
-const micLabel = computed(() => {
-  switch (micState.value) {
-    case 'connecting':
-      return 'Запуск мікрофона…'
-    case 'listening':
-      return 'Кажіть кану…'
-    case 'processing':
-      return 'Обробка…'
-    default:
-      return 'Натисни і скажи'
-  }
-})
-
-const onMicPointerDown = (e: PointerEvent) => {
-  try {
-    ;(e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId)
-  } catch {}
-  void micPress()
-}
-
-onBeforeUnmount(() => session?.stop())
-
-const tryAgain = () => {
-  retry()
-  answer.value = ''
-  focusInput()
-}
-
-const skip = () => {
-  next()
-}
-
-const restart = () => {
-  if (drillMode.value === 'srs') refreshSrsSnapshot()
-  reset()
-  answer.value = ''
-  revealed.value = false
-  sessionPairs.value = []
-  focusInput()
-}
-
-const ttsSupported = computed(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
-
-const speak = () => {
-  if (!ttsSupported.value || !expectedKana.value) return
-  const u = new SpeechSynthesisUtterance(expectedKana.value)
-  const jaVoice = window.speechSynthesis
-    .getVoices()
-    .find((v) => v.lang.toLowerCase().startsWith('ja'))
-  u.lang = 'ja-JP'
-  u.rate = 0.7
-  if (jaVoice) u.voice = jaVoice
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(u)
-}
-
-const chunkLabel = computed(() => {
-  const n = chunkSize.value
-  if (n >= WHOLE_WORD) return 'Слово'
-  if (n === 1) return '1 кана'
-  if (n >= 2 && n <= 4) return `${n} кани`
-  return `${n} кан`
-})
-
-const youSaidRomaji = computed(() => {
-  return lastAnswer.value
-})
-
-const currentStat = computed(() => stats.statFor(expectedKana.value))
-const weakBadge = computed(() => isSingleKana.value && isWeak(currentStat.value))
-const confusionHint = computed(() => (isSingleKana.value ? topConfusion(currentStat.value) : ''))
-
-const contrast = computed(() =>
-  lastOutcome.value === 'wrong' && lastConfused.value
-    ? kanaContrast(expectedKana.value, lastConfused.value)
-    : null,
-)
-
-const weakSummary = computed(() => stats.weak().slice(0, 10))
-
-const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))
-const accuracy = computed(() =>
-  total.value === 0 ? 0 : Math.round((correctCount.value / total.value) * 100),
-)
-const headline = computed(() => encouragement(accuracy.value))
-
-const difficulty = computed(() => analyzeKanaDifficulty(props.sourceText))
-const difficultyTiers = computed(() => {
-  const data = difficulty.value
-  const denom = data.total || 1
-  const pct = (value: number) => Math.round((value / denom) * 100)
-  return [
-    { key: 'easy', label: 'Легкі', count: data.easy, pct: pct(data.easy) },
-    { key: 'medium', label: 'Середні', count: data.medium, pct: pct(data.medium) },
-    { key: 'hard', label: 'Складні', count: data.hard, pct: pct(data.hard) },
-  ]
-})
-const donutGradient = computed(() => {
-  const data = difficulty.value
-  if (data.total === 0) return 'conic-gradient(var(--divider) 0 100%)'
-  const easyEnd = (data.easy / data.total) * 100
-  const mediumEnd = easyEnd + (data.medium / data.total) * 100
-  return `conic-gradient(var(--mint-strong) 0 ${easyEnd}%, var(--sky-strong) ${easyEnd}% ${mediumEnd}%, var(--rose-strong) ${mediumEnd}% 100%)`
-})
-const drillConfusions = computed(() => collectConfusionPairs(sessionPairs.value, 5))
-
-onMounted(() => focusInput())
+const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
+  { id: 'recognition', label: 'Впізнавання', hint: 'Бачиш кану → називаєш звук' },
+  { id: 'dictation', label: 'Диктант', hint: 'Чуєш звук → пишеш кану' },
+  { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
+  { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
+]
 </script>
 
 <template>
@@ -282,11 +51,24 @@ onMounted(() => focusInput())
       <div>
         <p class="eyebrow">Урок кани</p>
         <h1>Практика кани</h1>
-        <span v-if="drillMode === 'srs'" class="srs-due-badge">
-          🔁 На сьогодні: {{ srsDueCount }}
-        </span>
+        <span v-if="drillMode === 'srs'" class="srs-due-badge"> 🔁 На сьогодні: {{ srsDueCount }} </span>
       </div>
       <div class="drill-controls">
+        <div class="drill-format" role="group" aria-label="Формат тренування">
+          <span class="eyebrow">Формат</span>
+          <div class="drill-format-toggle">
+            <button
+              v-for="f in FORMATS"
+              :key="f.id"
+              type="button"
+              :class="{ active: format === f.id }"
+              :title="f.hint"
+              @click="format = f.id"
+            >
+              {{ f.label }}
+            </button>
+          </div>
+        </div>
         <label class="drill-source">
           <span class="eyebrow">Джерело</span>
           <select v-model="drillMode" class="mic-select">
@@ -299,7 +81,7 @@ onMounted(() => focusInput())
             </optgroup>
           </select>
         </label>
-        <label class="drill-size">
+        <label v-if="!isSingleKanaFormat" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
             type="range"
@@ -315,8 +97,8 @@ onMounted(() => focusInput())
     </section>
 
     <p v-if="modeFellBack" class="drill-mode-note">
-      Для цього режиму ще немає даних — тренуємо весь текст. Пограйся трохи, і тут зʼявляться
-      твої слабкі кани та плутанини.
+      Для цього режиму ще немає даних — тренуємо весь текст. Пограйся трохи, і тут зʼявляться твої
+      слабкі кани та плутанини.
     </p>
 
     <section v-if="!isFinished && !srsEmpty" class="panel drill-progress">
@@ -436,116 +218,7 @@ onMounted(() => focusInput())
       </section>
     </template>
 
-    <section
-      v-else-if="!srsEmpty"
-      class="panel drill-card"
-      :class="{ correct: lastOutcome === 'correct', wrong: lastOutcome === 'wrong' }"
-    >
-      <SakuraDecor />
-      <div class="drill-kana-row">
-        <strong class="drill-kana">{{ expectedKana || '—' }}</strong>
-        <button
-          class="speaker-button"
-          type="button"
-          :disabled="!ttsSupported"
-          title="Послухати вимову"
-          aria-label="Послухати вимову"
-          @click="speak"
-        >
-          ▷
-        </button>
-      </div>
-
-      <div v-if="!lastOutcome && (weakBadge || confusionHint)" class="drill-cues">
-        <span v-if="weakBadge" class="drill-cue warn">⚠️ Тут часто буває помилка</span>
-        <span v-if="confusionHint" class="drill-cue confuse">
-          💡 Не сплутай з <b>{{ confusionHint }}</b>
-        </span>
-      </div>
-
-      <p v-if="revealed && !lastOutcome" class="drill-hint">
-        Підказка: <b>{{ expectedRomaji }}</b>
-      </p>
-
-      <form v-if="!lastOutcome" class="drill-input-row" @submit.prevent="submit">
-        <input
-          ref="inputEl"
-          v-model="answer"
-          class="mic-select drill-input"
-          type="text"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          placeholder="Введіть ромадзі (напр. mu)"
-        />
-        <button class="primary-button" type="submit" :disabled="!answer.trim()">Перевірити</button>
-      </form>
-
-      <div v-if="!lastOutcome && micSupported" class="drill-ptt">
-        <span class="drill-or">або</span>
-        <button
-          type="button"
-          class="drill-mic"
-          :class="{ active: micState === 'listening', busy: micState === 'connecting' || micState === 'processing' }"
-          aria-label="Тримай і говори"
-          @pointerdown.prevent="onMicPointerDown"
-          @pointerup="micRelease"
-          @pointercancel="micRelease"
-        >
-          <svg class="drill-mic-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor" />
-            <path
-              d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
-        <span class="drill-mic-label">{{ micLabel }}</span>
-        <span class="drill-ptt-hint">Утримуй кнопку, скажи кану, відпусти</span>
-      </div>
-
-      <div v-if="!lastOutcome" class="drill-sub-actions">
-        <button class="ghost-button small" type="button" @click="revealed = true">
-          Показати підказку
-        </button>
-        <button class="ghost-button small" type="button" @click="skip">Пропустити</button>
-      </div>
-
-      <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
-        <strong>✓ Правильно!</strong>
-        <span>{{ expectedKana }} = {{ expectedRomaji }}</span>
-      </div>
-
-      <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
-        <strong>✗ Не зараховано</strong>
-        <span
-          >Ви назвали: <b>{{ youSaidRomaji || '—' }}</b></span
-        >
-        <span
-          >Правильно: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span
-        >
-
-        <p v-if="contrast" class="drill-contrast">
-          {{ contrast.note }}
-        </p>
-
-        <div class="drill-actions">
-          <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
-          <button class="primary-button" type="button" @click="skip">Далі</button>
-        </div>
-      </div>
-
-      <div v-if="lastOutcome && currentChunk.length > 1" class="drill-breakdown">
-        <span v-for="(k, i) in currentChunk" :key="i" class="drill-kana-chip">
-          {{ k }}<small>{{ kanaToRomaji(k) }}</small>
-        </span>
-      </div>
-    </section>
-
-    <section v-else class="panel srs-empty">
+    <section v-else-if="srsEmpty" class="panel srs-empty">
       <SakuraDecor density="rich" />
       <h2>🌸 На сьогодні нічого повторювати</h2>
       <p>
@@ -554,10 +227,49 @@ onMounted(() => focusInput())
       </p>
       <button class="secondary-button" type="button" @click="emit('exit')">До тексту</button>
     </section>
+
+    <DrillRecognitionCard v-else-if="format === 'recognition'" :deck="deck" />
+    <DrillDictationCard v-else-if="format === 'dictation'" :deck="deck" />
+    <DrillChoiceCard v-else-if="format === 'choice'" :deck="deck" />
+    <DrillWritingCard v-else :deck="deck" />
   </main>
 </template>
 
 <style scoped>
+.drill-format {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.drill-format-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border-radius: 999px;
+  background: #fff3f6;
+  padding: 3px;
+  gap: 2px;
+}
+
+.drill-format-toggle button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.drill-format-toggle button.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
 .drill-source {
   display: flex;
   flex-direction: column;

@@ -69,11 +69,18 @@ ReadMyKans/
 ### App Views (App.vue)
 `setup` → (`drill` | `reading` → `result`). Дефолтний текст — `DEFAULT_STORY`.
 
-### Дрил (KanaDrill)
+### Дрил (KanaDrill) — дві осі: **джерело × формат**
+- **Джерело** (`drillMode` + `useDrillSource`): _які_ кани — весь текст / SRS на сьогодні / слабкі / плутанини / набори.
+- **Формат** (`useDrillDeck.format`, persisted): _як_ перевіряти. Спільний стан (навігація, stats/SRS, підсумок) — у **`useDrillDeck`**; формати — тонкі компоненти, що отримують `deck` пропом і кличуть `answer*`/`skip`/`restart`:
+  - `recognition` → `DrillRecognitionCard` (бачиш кану → ромадзі `answerRomaji` / голос `answerVoice`)
+  - `dictation` → `DrillDictationCard` (TTS `speakKana` → ввід ромадзі)
+  - `choice` → `DrillChoiceCard` (ромадзі/звук → 4 плитки з `buildDistractors`; хибний тап → `confusedWith` + контраст)
+  - `writing` → `DrillWritingCard` (обведення на canvas; оцінка через `strokeMatch` покриттям гліфа, **не** порядком рисок)
+- `choice`/`writing` — завжди single-kana (`effectiveChunkSize=1`). Письмо/вибір фіксують результат через `answerKana`/`answerWritten` (→ `useKanaDrill.submitOutcome`).
 - `useKanaDrill(sourceText, chunkSize)` → ріже читання джерела на шматки по `chunkSize` кан.
-- Відповідь: **ромадзі** (`submitRomaji`) або **голос** (`submitKana`).
 - `submitKana` пробує СИРИЙ текст і читання (kuromoji) — бо kuromoji вважає ізольовану は часткою → わ (хибна помилка), тому сире は теж приймається.
 - Push-to-talk: `usePushToTalk` (стейт-машина) + `useDrillSpeech` (Web Speech, **один інстанс**, що перевикористовується; скасування попереднього сеансу + watchdog).
+- TTS у дрилі/читанні — спільний `utils/kanaSpeech.ts` (`speakKana`), graceful без `speechSynthesis`.
 
 ### Матчинг (utils/matching.ts)
 - `advanceMatch(original, spoken, from)` — жадібне підпослідовне зіставлення; монотонне, толерантне до сміття, стійке до ковзного вікна ASR.

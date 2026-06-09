@@ -55,7 +55,7 @@ export default defineConfig(({ command }) => ({
       // 'prompt' (not 'autoUpdate') so a new version waits for the user to tap
       // «Оновити» in the toast instead of silently reloading mid-session.
       registerType: 'prompt',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Kana Reader',
         short_name: 'Kana',
@@ -67,7 +67,9 @@ export default defineConfig(({ command }) => ({
         orientation: 'portrait',
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

@@ -1,4 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kana Reader">
-  <rect width="512" height="512" rx="112" fill="#f45f8a" />
-  <text x="256" y="300" text-anchor="middle" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif" font-size="280" font-weight="700" fill="#ffffff">か</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff8fb0" />
+      <stop offset="1" stop-color="#f24c7d" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.12" r="0.9">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45" />
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="lav" cx="0.9" cy="1" r="0.8">
+      <stop offset="0" stop-color="#a88ce8" stop-opacity="0.55" />
+      <stop offset="0.6" stop-color="#a88ce8" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#ffe3ec" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)" />
+  <rect width="512" height="512" fill="url(#lav)" />
+  <rect width="512" height="512" fill="url(#glow)" />
+
+  <g transform="translate(256 264)">
+    <g fill="url(#petal)" stroke="#ffd0de" stroke-width="3" stroke-linejoin="round">
+      <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" />
+      <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(72)" />
+      <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(144)" />
+      <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(216)" />
+      <path d="M0,-26 C-46,-40 -70,-96 -52,-138 C-46,-153 -30,-152 -16,-142 C-8,-136 -6,-132 0,-126 C6,-132 8,-136 16,-142 C30,-152 46,-153 52,-138 C70,-96 46,-40 0,-26 Z" transform="rotate(288)" />
+    </g>
+
+    <circle r="30" fill="#ffd36e" />
+    <g fill="#ffb24d">
+      <circle cx="0" cy="-14" r="5" />
+      <circle cx="13" cy="-4" r="5" transform="rotate(72)" />
+      <circle cx="13" cy="-4" r="5" transform="rotate(144)" />
+      <circle cx="13" cy="-4" r="5" transform="rotate(216)" />
+      <circle cx="13" cy="-4" r="5" transform="rotate(288)" />
+    </g>
+  </g>
 </svg>

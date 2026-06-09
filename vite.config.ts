@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { defineConfig, type Connect, type PluginOption } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
 
 const serveDictRaw = (): PluginOption => {
   const dictDir = resolve(import.meta.dirname, 'public', 'dict')
@@ -47,7 +48,36 @@ const serveDictRaw = (): PluginOption => {
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/ReadMyKans/' : '/',
-  plugins: [vue(), serveDictRaw()],
+  plugins: [
+    vue(),
+    serveDictRaw(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icon.svg'],
+      manifest: {
+        name: 'Kana Reader',
+        short_name: 'Kana',
+        description: 'Тренування читання японської кани вголос',
+        lang: 'uk',
+        theme_color: '#f45f8a',
+        background_color: '#fff7f8',
+        display: 'standalone',
+        orientation: 'portrait',
+        icons: [
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // Precache the app shell only. The kuromoji dictionary (~15 MB of
+        // *.dat.gz) is deliberately excluded — it loads/caches at runtime.
+        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        globIgnores: ['**/dict/**'],
+        navigateFallbackDenylist: [/\.dat\.gz$/],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
+    }),
+  ],
 
   optimizeDeps: {
     include: ['@sglkc/kuromoji'],

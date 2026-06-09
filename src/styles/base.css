@@ -2544,6 +2544,25 @@ h3 {
     0 14px 26px rgba(0, 0, 0, 0.4);
 }
 
+/* Live-kana feedback states were hard-coded light, so on dark theme the
+   panel flashed white whenever a mismatch blinked through during recognition */
+[data-theme='dark'] .spoken-kana-card strong {
+  color: var(--sky-strong);
+}
+
+[data-theme='dark'] .live-kana-panel.has-error {
+  border-color: rgba(255, 128, 149, 0.45);
+  background: #322337;
+}
+
+[data-theme='dark'] .live-kana-panel.has-error .spoken-kana-card {
+  background: var(--rose);
+}
+
+[data-theme='dark'] .live-kana-panel.has-error .spoken-kana-card strong {
+  color: var(--rose-strong);
+}
+
 /* ── Mobile layout fixes ────────────────────────────────── */
 @media (max-width: 620px) {
   /* Hero CTAs must stack — two nowrap buttons side-by-side overflow narrow phones */

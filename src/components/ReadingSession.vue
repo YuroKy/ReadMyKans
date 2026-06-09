@@ -630,4 +630,16 @@ onBeforeUnmount(() => {
   color: var(--primary);
   font-weight: 700;
 }
+
+/* The inset boxes above are hard-coded light; on dark theme the text
+   variables turn light too, so they need a dark surface to stay readable. */
+[data-theme='dark'] .shadow-steps,
+[data-theme='dark'] .furigana-toggle,
+[data-theme='dark'] .furigana-text {
+  background: #2c2640;
+}
+
+[data-theme='dark'] .furigana-toggle button.active {
+  background: #403858;
+}
 </style>

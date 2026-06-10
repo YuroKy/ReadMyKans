@@ -193,6 +193,7 @@ button:not(:disabled) {
 
 .text-input-panel,
 .upload-panel,
+.library-panel,
 .kana-stats,
 .kana-mastery,
 .daily-panel,

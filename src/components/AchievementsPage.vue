@@ -22,21 +22,22 @@ const formatDate = (iso: string | undefined): string => {
     : date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-const items = computed(() =>
-  ACHIEVEMENTS.map((a) => {
-    const progress = a.progress?.(snapshot)
-    return {
-      ...a,
-      unlocked: isUnlocked(a.id),
-      date: formatDate(unlocked.value[a.id]),
-      progress,
-      progressPct:
-        progress && progress.target > 0
-          ? Math.min(100, Math.round((progress.current / progress.target) * 100))
-          : null,
-    }
-  }),
-)
+const enrich = (a: (typeof ACHIEVEMENTS)[number]) => {
+  const progress = a.progress?.(snapshot)
+  return {
+    ...a,
+    unlocked: isUnlocked(a.id),
+    date: formatDate(unlocked.value[a.id]),
+    progress,
+    progressPct:
+      progress && progress.target > 0
+        ? Math.min(100, Math.round((progress.current / progress.target) * 100))
+        : null,
+  }
+}
+
+const items = computed(() => ACHIEVEMENTS.filter((a) => !a.shame).map(enrich))
+const shameItems = computed(() => ACHIEVEMENTS.filter((a) => a.shame).map(enrich))
 </script>
 
 <template>
@@ -51,14 +52,14 @@ const items = computed(() =>
       <button class="ghost-button small" type="button" @click="emit('exit')">← На головну</button>
     </section>
 
-    <section class="ach-page-grid">
+    <section class="ach-page-grid" aria-label="Досягнення">
       <article
         v-for="a in items"
         :key="a.id"
         class="panel ach-card"
         :class="{ locked: !a.unlocked }"
       >
-        <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="a.unlocked" :size="52" />
+        <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="a.unlocked" :shame="a.shame" :size="52" />
         <div class="ach-card-body">
           <h2>{{ a.title }}</h2>
           <p>{{ a.description }}</p>
@@ -72,6 +73,37 @@ const items = computed(() =>
           <p v-else-if="!a.unlocked" class="ach-card-date muted">Ще не відкрито</p>
         </div>
       </article>
+    </section>
+
+    <section v-if="shameItems.length" class="shame-section" aria-label="Зала ганьби">
+      <div class="shame-heading">
+        <p class="eyebrow">Антиздобутки</p>
+        <h2>💀 Зала ганьби</h2>
+      </div>
+      <div class="ach-page-grid">
+        <article
+          v-for="a in shameItems"
+          :key="a.id"
+          class="panel ach-card shame"
+          :class="{ locked: !a.unlocked }"
+        >
+          <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="a.unlocked" :shame="true" :size="52" />
+          <div class="ach-card-body">
+            <h2>{{ a.title }}</h2>
+            <p>{{ a.description }}</p>
+            <p v-if="a.unlocked && a.date" class="ach-card-date shame-date">
+              Заслужено {{ a.date }}. Без коментарів.
+            </p>
+            <div v-else-if="!a.unlocked && a.progressPct !== null" class="ach-card-progress">
+              <div class="ach-progress-track">
+                <div class="ach-progress-fill shame-fill" :style="{ width: `${a.progressPct}%` }" />
+              </div>
+              <small>{{ a.progress!.current }} / {{ a.progress!.target }}</small>
+            </div>
+            <p v-else-if="!a.unlocked" class="ach-card-date muted">Поки що чисте сумління</p>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
 </template>
@@ -148,5 +180,27 @@ const items = computed(() =>
 .ach-card-progress small {
   color: var(--muted);
   font-weight: 600;
+}
+
+.shame-section {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.shame-heading h2 {
+  margin: 0;
+}
+
+.ach-card.shame {
+  filter: saturate(0.5);
+}
+
+.shame-date {
+  color: var(--muted);
+}
+
+.shame-fill {
+  background: var(--muted);
 }
 </style>

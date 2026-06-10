@@ -13,6 +13,8 @@ const base: ProgressSnapshot = {
   bestSuddenDeath: 0,
   bestDrillCombo: 0,
   formatsSeen: [],
+  maxConfusionCount: 0,
+  longestHesitationMs: 0,
 }
 
 describe('achievements.evaluate', () => {
@@ -56,8 +58,17 @@ describe('achievements.evaluate', () => {
       bestSuddenDeath: 99,
       bestDrillCombo: 99,
       formatsSeen: ['recognition', 'dictation', 'choice', 'writing'],
+      maxConfusionCount: 99,
+      longestHesitationMs: 99_999,
     })
     assert.equal(ids.length, ACHIEVEMENTS.length)
+  })
+
+  it('пороги «Зали ганьби»', () => {
+    assert.ok(!evaluate({ ...base, maxConfusionCount: 9 }).includes('shame-again-you'))
+    assert.ok(evaluate({ ...base, maxConfusionCount: 10 }).includes('shame-again-you'))
+    assert.ok(!evaluate({ ...base, longestHesitationMs: 5999 }).includes('shame-six-seconds'))
+    assert.ok(evaluate({ ...base, longestHesitationMs: 6000 }).includes('shame-six-seconds'))
   })
 
   it('комбо-пороги', () => {

@@ -219,8 +219,19 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   })
   if (getCurrentInstance()) onBeforeUnmount(cancelTimer)
 
+  // --- Hesitation («Шість секунд ганьби») -------------------------------------
+  // Час від показу картки до відповіді. Понад хвилину ігноруємо (перемкнута
+  // вкладка — не ганьба); таймаути сюди не потрапляють — їх убив таймер.
+  let cardShownAt = Date.now()
+  const HESITATION_IGNORE_MS = 60_000
+  const noteHesitation = () => {
+    const ms = Date.now() - cardShownAt
+    if (ms < HESITATION_IGNORE_MS) recordBest('drill:hesitation', ms)
+  }
+
   // --- Answer entry points (one per input modality) --------------------------
   const answerRomaji = (romaji: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitRomaji(romaji)
     recordStat(outcome, romajiToKana(romaji))
     handleOutcome(outcome)
@@ -228,6 +239,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   }
 
   const answerVoice = (spokenText: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitKana(spokenText)
     const firstKana = [...spokenText].filter(isKana)[0] ?? ''
     recordStat(outcome, firstKana)
@@ -237,6 +249,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   // A single tapped kana (choice format).
   const answerKana = (chosenKana: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitKana(chosenKana)
     recordStat(outcome, chosenKana)
     handleOutcome(outcome)
@@ -246,6 +259,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // Self/auto-assessed outcome (writing format: correctness comes from how well
   // the trace covers the glyph, not from text matching). No confusion partner.
   const answerWritten = (correct: boolean): DrillOutcome => {
+    noteHesitation()
     const outcome: DrillOutcome = correct ? 'correct' : 'wrong'
     submitOutcome(outcome, expectedKana.value)
     recordStat(outcome, '')
@@ -279,6 +293,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   // Кожна нова картка (і перемикання налаштування) переззброює таймер.
   watch([index, sessionToken, timerEnabled], armTimer, { immediate: true })
+  watch([index, sessionToken], () => {
+    cardShownAt = Date.now()
+  })
 
   // «Спробувати ще» дає свіжий відлік — інакше друга спроба була б миттєвою
   // поразкою з уже спаленим бюджетом часу.

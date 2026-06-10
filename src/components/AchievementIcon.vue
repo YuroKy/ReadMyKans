@@ -10,6 +10,8 @@ const props = defineProps<{
   icon?: string
   unlocked?: boolean
   size?: number
+  // «Зала ганьби»: попелястий медальйон без святкового градієнта.
+  shame?: boolean
 }>()
 
 // Внутрішня розмітка SVG у системі координат 48×48 (центр 24,24).
@@ -42,6 +44,12 @@ const GLYPHS: Record<string, string> = {
   // 💀 → череп
   'suddendeath-15':
     '<path class="medal-glyph" d="M24 9c-8 0-13 5.5-13 12.5 0 4.5 2.5 8 6 9.8V36a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4.7c3.5-1.8 6-5.3 6-9.8C37 14.5 32 9 24 9z"/><circle class="medal-cut" cx="19" cy="22" r="3"/><circle class="medal-cut" cx="29" cy="22" r="3"/><rect class="medal-cut" x="22.7" y="28" width="2.6" height="6"/>',
+  // 🔁 «Знову ти» → стрілки по колу
+  'shame-again-you':
+    '<path class="medal-glyph" d="M24 12a12 12 0 0 1 11 7h-4.4A8 8 0 0 0 16 24h-4a12 12 0 0 1 12-12zm-7 17.4A8 8 0 0 0 32 24h4a12 12 0 0 1-23 5h4zM31 13l6 6h-6zM17 35l-6-6h6z"/>',
+  // 🐌 «Шість секунд» → равлик
+  'shame-six-seconds':
+    '<circle cx="21" cy="24" r="9" fill="none" class="medal-stroke" stroke-width="3"/><circle cx="21" cy="24" r="3.5" class="medal-glyph"/><path class="medal-glyph" d="M12 33h26v3H12zM33 33V21h3v12zM36 22c0-3-2-5-2-5l2-2s3 3 3 7z"/>',
   // 🎴 → чотири формати (плитки 2×2)
   'all-formats':
     '<rect class="medal-glyph" x="12" y="12" width="11" height="11" rx="3"/><rect class="medal-glyph" x="25" y="12" width="11" height="11" rx="3" opacity="0.75"/><rect class="medal-glyph" x="12" y="25" width="11" height="11" rx="3" opacity="0.75"/><rect class="medal-glyph" x="25" y="25" width="11" height="11" rx="3"/>',
@@ -58,7 +66,7 @@ const px = computed(() => props.size ?? 44)
     :height="px"
     viewBox="0 0 48 48"
     class="ach-medal"
-    :class="{ locked: !unlocked }"
+    :class="{ locked: !unlocked, shame }"
     role="img"
     aria-hidden="true"
   >
@@ -122,6 +130,24 @@ const px = computed(() => props.size ?? 44)
 .ach-medal .medal-text {
   font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
   font-weight: 800;
+}
+
+/* «Зала ганьби»: попіл замість свята навіть у відкритих. */
+.ach-medal.shame {
+  --medal-surface: var(--surface-inset);
+}
+
+.ach-medal.shame .medal-ring {
+  stroke: var(--muted);
+  opacity: 0.6;
+}
+
+.ach-medal.shame .medal-glyph {
+  fill: var(--muted);
+}
+
+.ach-medal.shame .medal-stroke {
+  stroke: var(--muted);
 }
 
 /* Locked: сірий силует без градієнта. */

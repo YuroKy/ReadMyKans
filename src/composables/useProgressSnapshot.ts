@@ -36,9 +36,13 @@ export const useProgressSnapshot = () => {
   const build = (): ProgressSnapshot => {
     let totalAnswered = 0
     let totalCorrect = 0
+    let maxConfusionCount = 0
     for (const stat of Object.values(stats.value)) {
       totalAnswered += stat.correct + stat.wrong
       totalCorrect += stat.correct
+      for (const count of Object.values(stat.confusedWith)) {
+        if (count > maxConfusionCount) maxConfusionCount = count
+      }
     }
 
     // Sudden-death streaks live under their own key and must not count toward
@@ -61,6 +65,8 @@ export const useProgressSnapshot = () => {
       bestSuddenDeath: scores.value['sprint:suddendeath'] ?? 0,
       bestDrillCombo: scores.value['drill:combo'] ?? 0,
       formatsSeen: seen.value,
+      maxConfusionCount,
+      longestHesitationMs: scores.value['drill:hesitation'] ?? 0,
     }
   }
 

@@ -13,6 +13,8 @@ export interface ProgressSnapshot {
   bestSuddenDeath: number // best sudden-death streak
   bestDrillCombo: number // longest correct streak within a drill session
   formatsSeen: string[] // drill formats the learner has tried
+  maxConfusionCount: number // найчастіша одна пара плутанини (для «Зали ганьби»)
+  longestHesitationMs: number // найдовше вагання перед відповіддю
 }
 
 export interface AchievementProgress {
@@ -28,6 +30,8 @@ export interface Achievement {
   test: (s: ProgressSnapshot) => boolean
   // Для лічильних ачивок: прогрес до розлоку (смужка на сторінці досягнень).
   progress?: (s: ProgressSnapshot) => AchievementProgress
+  // «Зала ганьби»: антиздобутки, якими не пишаються (окрема секція, попіл).
+  shame?: boolean
 }
 
 const ALL_FORMATS = ['recognition', 'dictation', 'choice', 'writing']
@@ -118,6 +122,23 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'Спробувати всі формати тренування',
     icon: '🎴',
     test: (s) => ALL_FORMATS.every((f) => s.formatsSeen.includes(f)),
+  },
+  {
+    id: 'shame-again-you',
+    title: 'Знову ти',
+    description: 'Сплутати ту саму пару кан 10 разів',
+    icon: '🔁',
+    shame: true,
+    test: (s) => s.maxConfusionCount >= 10,
+    progress: (s) => ({ current: Math.min(s.maxConfusionCount, 10), target: 10 }),
+  },
+  {
+    id: 'shame-six-seconds',
+    title: 'Шість секунд ганьби',
+    description: 'Думати над карткою 6+ секунд (без таймера, звісно)',
+    icon: '🐌',
+    shame: true,
+    test: (s) => s.longestHesitationMs >= 6000,
   },
 ]
 

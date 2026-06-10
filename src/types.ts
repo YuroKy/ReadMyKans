@@ -10,6 +10,16 @@ export type AppView =
   | 'exam'
   | 'achievements'
 
+// Пункти сайдбару: 'home' веде на setup, решта збігається з AppView.
+export type NavTarget =
+  | 'home'
+  | 'drill'
+  | 'reading'
+  | 'sprint'
+  | 'memory'
+  | 'exam'
+  | 'achievements'
+
 export interface UploadedFileInfo {
   name: string
   size: number

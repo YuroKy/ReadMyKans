@@ -13,8 +13,8 @@ import TextInputPanel from './components/TextInputPanel.vue'
 import TextLibraryPanel from './components/TextLibraryPanel.vue'
 import DataPanel from './components/DataPanel.vue'
 import DailyGoalPanel from './components/DailyGoalPanel.vue'
-import AchievementsPanel from './components/AchievementsPanel.vue'
 import ActivityCalendar from './components/ActivityCalendar.vue'
+import AppSidebar from './components/AppSidebar.vue'
 import AccuracyTrend from './components/AccuracyTrend.vue'
 import SprintSession from './components/SprintSession.vue'
 import MemoryGame from './components/MemoryGame.vue'
@@ -36,7 +36,7 @@ import { achievementById } from './utils/achievements'
 import { usePwaInstall } from './composables/usePwaInstall'
 import { usePwaUpdate } from './composables/usePwaUpdate'
 import { useHashRoute } from './composables/useHashRoute'
-import type { AppView, SessionResult, UploadedFileInfo } from './types'
+import type { AppView, NavTarget, SessionResult, UploadedFileInfo } from './types'
 import type { LibraryText } from './data/library'
 import { analyzeKana } from './utils/kana'
 import { track } from './utils/analytics'
@@ -259,6 +259,37 @@ const editText = () => {
   view.value = 'setup'
 }
 
+// Сесійні view (дрил, читання, ігри, екзамен) — фокус-режими без сайдбару.
+const showSidebar = computed(() =>
+  view.value === 'setup' || view.value === 'result' || view.value === 'achievements',
+)
+
+const handleNavigate = (target: NavTarget) => {
+  switch (target) {
+    case 'home':
+      editText()
+      break
+    case 'drill':
+      startDrill()
+      break
+    case 'reading':
+      startReading()
+      break
+    case 'sprint':
+      startSprint()
+      break
+    case 'memory':
+      startMemory()
+      break
+    case 'exam':
+      startExam()
+      break
+    case 'achievements':
+      view.value = 'achievements'
+      break
+  }
+}
+
 const newSession = () => {
   sourceText.value = DEFAULT_STORY
   fileInfo.value = null
@@ -320,101 +351,85 @@ const newSession = () => {
       </div>
     </header>
 
-    <main v-if="view === 'setup'" class="setup-layout">
-      <section class="intro-panel">
-        <SakuraDecor density="rich" />
-        <div class="intro-copy">
-          <p class="eyebrow">Практика вголос</p>
-          <h1>Kana Reader</h1>
-          <p>
-            Вставте японський текст, прочитайте його вголос і отримайте зрозумілий результат із
-            каною для повторення.
-          </p>
-        </div>
-        <div class="intro-actions">
-          <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
-          <button class="primary-button" type="button" @click="startReading">Почати читання</button>
-          <button
-            class="ghost-button"
-            :class="{ 'game-locked': gamesAreLocked }"
-            type="button"
-            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
-            @click="startSprint"
-          >
-            {{ gamesAreLocked ? '🔒' : '⏱️' }} Спідран
-          </button>
-          <button
-            class="ghost-button"
-            :class="{ 'game-locked': gamesAreLocked }"
-            type="button"
-            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
-            @click="startMemory"
-          >
-            {{ gamesAreLocked ? '🔒' : '🎴' }} Пари
-          </button>
-          <button
-            class="ghost-button"
-            :class="{ 'game-locked': examTakenThisWeek }"
-            type="button"
-            :title="examTakenThisWeek ? 'Уже складався цього тижня' : '50 кан, без підказок, одна спроба на тиждень'"
-            @click="startExam"
-          >
-            🎓 Екзамен
-          </button>
-        </div>
-      </section>
+    <div class="app-body" :class="{ 'with-nav': showSidebar }">
+      <AppSidebar
+        v-if="showSidebar"
+        :view="view"
+        :games-locked="gamesAreLocked"
+        :exam-taken="examTakenThisWeek"
+        @navigate="handleNavigate"
+      />
 
-      <DebtRansomPanel v-if="gamesAreLocked || ransomInProgress" />
+      <div class="app-content">
+        <main v-if="view === 'setup'" class="setup-layout">
+          <section class="intro-panel">
+            <SakuraDecor density="rich" />
+            <div class="intro-copy">
+              <p class="eyebrow">Практика вголос</p>
+              <h1>Kana Reader</h1>
+              <p>
+                Вставте японський текст, прочитайте його вголос і отримайте зрозумілий результат із
+                каною для повторення.
+              </p>
+            </div>
+            <div class="intro-actions">
+              <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
+              <button class="primary-button" type="button" @click="startReading">Почати читання</button>
+            </div>
+          </section>
 
-      <div class="setup-grid">
-        <div class="main-column">
-          <TextLibraryPanel :current-text="sourceText" @select="handleLibrarySelect" />
-          <TextInputPanel v-model="sourceText" :file-info="fileInfo" :error="setupError" />
-          <FileUploadPanel
-            @loaded="handleFileLoaded"
-            @error="(message) => (uploadError = message)"
-          />
-          <p v-if="uploadError" class="field-error standalone">{{ uploadError }}</p>
-        </div>
+          <DebtRansomPanel v-if="gamesAreLocked || ransomInProgress" />
 
-        <aside class="side-column">
-          <KanaStatsPanel :analysis="kanaAnalysis" />
-          <DailyGoalPanel />
-          <KanaMasteryPanel />
-          <AchievementsPanel @open="view = 'achievements'" />
-          <ActivityCalendar />
-          <KanaReferenceTable />
-          <AccuracyTrend :history="history" />
-          <SessionHistory :history="history" @clear="clearHistory" />
-          <DataPanel />
-        </aside>
+          <div class="setup-grid">
+            <div class="main-column">
+              <TextLibraryPanel :current-text="sourceText" @select="handleLibrarySelect" />
+              <TextInputPanel v-model="sourceText" :file-info="fileInfo" :error="setupError" />
+              <FileUploadPanel
+                @loaded="handleFileLoaded"
+                @error="(message) => (uploadError = message)"
+              />
+              <p v-if="uploadError" class="field-error standalone">{{ uploadError }}</p>
+            </div>
+
+            <aside class="side-column">
+              <KanaStatsPanel :analysis="kanaAnalysis" />
+              <DailyGoalPanel />
+              <KanaMasteryPanel />
+              <ActivityCalendar />
+              <KanaReferenceTable />
+              <AccuracyTrend :history="history" />
+              <SessionHistory :history="history" @clear="clearHistory" />
+              <DataPanel />
+            </aside>
+          </div>
+        </main>
+
+        <KanaDrill v-else-if="view === 'drill'" :source-text="sourceText" @exit="editText" />
+
+        <ReadingSession
+          v-else-if="view === 'reading'"
+          :source-text="sourceText"
+          @finish="handleSessionFinished"
+          @edit="editText"
+        />
+
+        <SprintSession v-else-if="view === 'sprint'" @exit="editText" @finish="syncAchievements" />
+
+        <MemoryGame v-else-if="view === 'memory'" @exit="editText" />
+
+        <ExamSession v-else-if="view === 'exam'" @exit="editText" @finish="syncAchievements" />
+
+        <AchievementsPage v-else-if="view === 'achievements'" @exit="editText" />
+
+        <ResultReview
+          v-else-if="latestResult"
+          :result="latestResult"
+          @retry="retryLatest"
+          @edit="editText"
+          @new-session="newSession"
+        />
       </div>
-    </main>
-
-    <KanaDrill v-else-if="view === 'drill'" :source-text="sourceText" @exit="editText" />
-
-    <ReadingSession
-      v-else-if="view === 'reading'"
-      :source-text="sourceText"
-      @finish="handleSessionFinished"
-      @edit="editText"
-    />
-
-    <SprintSession v-else-if="view === 'sprint'" @exit="editText" @finish="syncAchievements" />
-
-    <MemoryGame v-else-if="view === 'memory'" @exit="editText" />
-
-    <ExamSession v-else-if="view === 'exam'" @exit="editText" @finish="syncAchievements" />
-
-    <AchievementsPage v-else-if="view === 'achievements'" @exit="editText" />
-
-    <ResultReview
-      v-else-if="latestResult"
-      :result="latestResult"
-      @retry="retryLatest"
-      @edit="editText"
-      @new-session="newSession"
-    />
+    </div>
 
     <footer class="site-footer">
       <span>
@@ -532,6 +547,13 @@ const newSession = () => {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+/* На мобільному тости піднімаються над нижнім таб-баром */
+@media (max-width: 620px) {
+  .toast-stack {
+    bottom: 84px;
   }
 }
 </style>

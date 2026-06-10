@@ -106,6 +106,18 @@ button:not(:disabled) {
   color: var(--muted);
 }
 
+/* Сайдбар-навігація: rail зліва на десктопі, контент займає решту ширини. */
+.app-body {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.app-content {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .setup-layout,
 .session-layout,
 .result-layout {
@@ -2650,6 +2662,11 @@ h3 {
 
   .topbar-actions {
     gap: 10px;
+  }
+
+  /* Фіксований нижній таб-бар не має перекривати контент і футер */
+  .app-body.with-nav {
+    padding-bottom: 76px;
   }
 
   /* The summary hero matches the other heroes' mobile padding */

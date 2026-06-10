@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
+import { useDrillPrefs } from '../composables/useDrillPrefs'
 import { kanaToRomaji } from '../utils/romaji'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
@@ -28,8 +29,21 @@ const answer = ref('')
 const revealed = ref(false)
 const inputEl = ref<HTMLInputElement | null>(null)
 
+// Хардкор: одне прослуховування на картку, без «Показати кану», опційно
+// швидша вимова. Автоплей нової картки рахується як прослуховування №1.
+const { prefs } = useDrillPrefs()
+const hardcore = computed(() => prefs.value.dictationHardcore)
+const playsUsed = ref(0)
+const canReplay = computed(() => !hardcore.value || playsUsed.value < 1)
+
 const ttsSupported = isSpeechSynthesisSupported()
-const play = () => speakKana(expectedKana.value, { rate: 0.85 })
+const play = () => {
+  const rate = hardcore.value ? prefs.value.dictationRate * 0.85 : 0.85
+  if (speakKana(expectedKana.value, { rate })) playsUsed.value += 1
+}
+const replay = () => {
+  if (canReplay.value) play()
+}
 const focusInput = () => nextTick(() => inputEl.value?.focus())
 
 // Пропуск не повинен повертати фокус в інпут: на мобільному це піднімає
@@ -43,6 +57,7 @@ const skipCards = (count = 1) => {
 const resetCard = () => {
   answer.value = ''
   revealed.value = false
+  playsUsed.value = 0
   if (focusAfterChange) focusInput()
   focusAfterChange = true
   // Auto-play the new card so the learner hears it without an extra tap.
@@ -60,7 +75,8 @@ const tryAgain = () => {
   retry()
   answer.value = ''
   focusInput()
-  play()
+  // У хардкорі друга спроба йде з пам'яті — без повторного програвання.
+  if (!hardcore.value) play()
 }
 
 onMounted(() => {
@@ -84,10 +100,10 @@ onMounted(() => {
       <button
         class="drill-audio-button"
         type="button"
-        :disabled="!ttsSupported"
+        :disabled="!ttsSupported || (!canReplay && !lastOutcome)"
         title="Прослухати"
         aria-label="Прослухати кану"
-        @click="play"
+        @click="replay"
       >
         <span v-if="lastOutcome">{{ expectedKana }}</span>
         <span v-else aria-hidden="true">🔊</span>
@@ -118,10 +134,16 @@ onMounted(() => {
     </form>
 
     <div v-if="!lastOutcome" class="drill-sub-actions">
-      <button class="ghost-button small" type="button" :disabled="!ttsSupported" @click="play">
-        🔁 Ще раз
+      <button
+        class="ghost-button small"
+        type="button"
+        :disabled="!ttsSupported || !canReplay"
+        :title="canReplay ? '' : 'Хардкор: одне прослуховування'"
+        @click="replay"
+      >
+        {{ canReplay ? '🔁 Ще раз' : '🔇 Було одне' }}
       </button>
-      <button class="ghost-button small" type="button" @click="revealed = true">
+      <button v-if="!hardcore" class="ghost-button small" type="button" @click="revealed = true">
         Показати кану
       </button>
       <button class="ghost-button small" type="button" @click="skipCards(1)">Пропустити</button>

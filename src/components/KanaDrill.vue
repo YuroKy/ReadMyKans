@@ -125,6 +125,36 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             </button>
           </div>
         </div>
+        <div v-if="format === 'dictation'" class="drill-format" role="group" aria-label="Складність диктанту">
+          <span class="eyebrow">Хардкор</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: !prefs.dictationHardcore }"
+              title="Скільки завгодно прослуховувань і підказка"
+              @click="prefs.dictationHardcore = false"
+            >
+              Звичайний
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.dictationHardcore }"
+              title="Одне прослуховування, без підказки"
+              @click="prefs.dictationHardcore = true"
+            >
+              💀 1 раз
+            </button>
+            <button
+              v-if="prefs.dictationHardcore"
+              type="button"
+              :class="{ active: prefs.dictationRate === 1.25 }"
+              title="Пришвидшена вимова"
+              @click="prefs.dictationRate = prefs.dictationRate === 1.25 ? 1 : 1.25"
+            >
+              ⏩ ×1.25
+            </button>
+          </div>
+        </div>
         <label v-if="!isSingleKanaFormat && !isWordMode" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input

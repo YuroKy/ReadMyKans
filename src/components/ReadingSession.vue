@@ -272,15 +272,13 @@ onBeforeUnmount(() => {
                 step="0.1"
                 class="mic-gain-slider"
                 :disabled="!shadow.supported"
-              />
+              >
             </label>
           </div>
 
           <div v-if="shadow.supported && shadow.hasSegments.value" class="shadow-steps">
             <div class="shadow-steps-head">
-              <span class="shadow-steps-pos"
-                >Речення {{ shadow.currentIndex.value + 1 }} / {{ shadow.segments.value.length }}</span
-              >
+              <span class="shadow-steps-pos">Речення {{ shadow.currentIndex.value + 1 }} / {{ shadow.segments.value.length }}</span>
               <div class="shadow-steps-buttons">
                 <button
                   class="ghost-button small"
@@ -338,9 +336,7 @@ onBeforeUnmount(() => {
       </div>
 
       <p v-if="furiganaMode !== 'off'" class="furigana-text" lang="ja">
-        <ruby v-for="(seg, i) in rubySegments" :key="i"
-          >{{ seg.base }}<rt v-if="seg.ruby">{{ seg.ruby }}</rt></ruby
-        >
+        <ruby v-for="(seg, i) in rubySegments" :key="i">{{ seg.base }}<rt v-if="seg.ruby">{{ seg.ruby }}</rt></ruby>
       </p>
     </section>
 
@@ -404,9 +400,7 @@ onBeforeUnmount(() => {
         <span class="eyebrow">Ви назвали</span>
         <strong>{{ liveFeedback.spokenAtCurrent || '—' }}</strong>
         <b class="romaji-text">{{ liveFeedback.spokenRomaji || 'romaji' }}</b>
-        <span v-if="liveFeedback.hasMismatch"
-          >Не зараховано. Очікувалось: {{ liveFeedback.expected }}</span
-        >
+        <span v-if="liveFeedback.hasMismatch">Не зараховано. Очікувалось: {{ liveFeedback.expected }}</span>
         <span v-else-if="liveFeedback.isComplete">Текст прочитано до кінця</span>
         <span v-else>Помилки на поточній кані немає</span>
       </div>

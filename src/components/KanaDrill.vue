@@ -84,13 +84,13 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
         <label v-if="!isSingleKanaFormat" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
+            v-model.number="chunkSize"
             type="range"
             min="1"
             max="6"
             step="1"
-            v-model.number="chunkSize"
             class="mic-gain-slider"
-          />
+          >
         </label>
         <button class="ghost-button small" type="button" @click="emit('exit')">Вийти</button>
       </div>

@@ -49,7 +49,7 @@ const updateText = (event: Event) => {
     <p v-if="error" class="field-error">{{ error }}</p>
 
     <div v-if="fileInfo" class="file-summary">
-      <span class="file-dot" aria-hidden="true"></span>
+      <span class="file-dot" aria-hidden="true" />
       <div>
         <strong>{{ fileInfo.name }}</strong>
         <span>

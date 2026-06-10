@@ -38,7 +38,7 @@ const onFile = async (event: Event) => {
         accept="application/json,.json"
         hidden
         @change="onFile"
-      />
+      >
     </div>
 
     <p v-if="error" class="field-error">{{ error }}</p>

@@ -55,7 +55,7 @@ const save = () => {
           min="1"
           max="500"
           inputmode="numeric"
-        />
+        >
         <button class="primary-button" type="submit">Зберегти</button>
       </div>
     </form>

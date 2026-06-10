@@ -48,7 +48,7 @@ const handleFile = (event: Event) => {
     </div>
 
     <label class="upload-dropzone">
-      <input type="file" accept=".txt,text/plain" @change="handleFile" />
+      <input type="file" accept=".txt,text/plain" @change="handleFile">
       <span class="upload-icon" aria-hidden="true">↑</span>
       <span>Вибрати текстовий файл</span>
     </label>

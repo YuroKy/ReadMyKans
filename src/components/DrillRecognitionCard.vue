@@ -160,7 +160,7 @@ onMounted(() => focusInput())
         autocapitalize="off"
         spellcheck="false"
         placeholder="Введіть ромадзі (напр. mu)"
-      />
+      >
       <button class="primary-button" type="submit" :disabled="!answer.trim()">Перевірити</button>
     </form>
 

@@ -94,7 +94,7 @@ onMounted(() => {
         autocapitalize="off"
         spellcheck="false"
         placeholder="Введіть ромадзі того, що почули"
-      />
+      >
       <button class="primary-button" type="submit" :disabled="!answer.trim()">Перевірити</button>
     </form>
 

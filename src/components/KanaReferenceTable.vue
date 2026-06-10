@@ -27,7 +27,7 @@ const tierClass = (kana: string): string => {
 
     <div v-if="isOpen" class="reference-body">
       <label class="progress-switch">
-        <input v-model="showProgress" type="checkbox" />
+        <input v-model="showProgress" type="checkbox">
         <span>Підсвітити прогрес</span>
       </label>
 

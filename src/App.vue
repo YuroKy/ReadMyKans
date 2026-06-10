@@ -10,6 +10,7 @@ import ResultReview from './components/ResultReview.vue'
 import SakuraDecor from './components/SakuraDecor.vue'
 import SessionHistory from './components/SessionHistory.vue'
 import TextInputPanel from './components/TextInputPanel.vue'
+import TextLibraryPanel from './components/TextLibraryPanel.vue'
 import DataPanel from './components/DataPanel.vue'
 import DailyGoalPanel from './components/DailyGoalPanel.vue'
 import AchievementsPanel from './components/AchievementsPanel.vue'
@@ -27,7 +28,9 @@ import { useToasts } from './composables/useToasts'
 import { achievementById } from './utils/achievements'
 import { usePwaInstall } from './composables/usePwaInstall'
 import { usePwaUpdate } from './composables/usePwaUpdate'
+import { useHashRoute } from './composables/useHashRoute'
 import type { AppView, SessionResult, UploadedFileInfo } from './types'
+import type { LibraryText } from './data/library'
 import { analyzeKana } from './utils/kana'
 import { track } from './utils/analytics'
 import { initReading } from './utils/reading'
@@ -56,6 +59,13 @@ const { build: buildSnapshot } = useProgressSnapshot()
 const { toasts, push: pushToast, dismiss: dismissToast } = useToasts()
 const { canInstall, promptInstall } = usePwaInstall()
 const { needRefresh, refresh } = usePwaUpdate()
+
+// Deep links that need state we don't have fall back to the setup screen.
+useHashRoute(view, (target) => {
+  if (target === 'result' && !latestResult.value) return 'setup'
+  if ((target === 'reading' || target === 'drill') && !sourceText.value.trim()) return 'setup'
+  return target
+})
 
 const GOAL_TOAST = {
   icon: '🎯',
@@ -127,6 +137,14 @@ const startMemory = () => {
   view.value = 'memory'
 }
 
+const handleLibrarySelect = (entry: LibraryText) => {
+  sourceText.value = entry.text
+  fileInfo.value = null
+  uploadError.value = ''
+  setupError.value = ''
+  track('library-select', { text: entry.id })
+}
+
 const handleFileLoaded = (text: string, info: UploadedFileInfo) => {
   sourceText.value = text
   fileInfo.value = info
@@ -178,7 +196,7 @@ const newSession = () => {
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="Kana Reader" @click.prevent="newSession">
+      <a class="brand" href="#/" aria-label="Kana Reader" @click.prevent="newSession">
         <span class="brand-mark">か</span>
         <span>Kana Reader</span>
       </a>
@@ -238,6 +256,7 @@ const newSession = () => {
 
       <div class="setup-grid">
         <div class="main-column">
+          <TextLibraryPanel :current-text="sourceText" @select="handleLibrarySelect" />
           <TextInputPanel v-model="sourceText" :file-info="fileInfo" :error="setupError" />
           <FileUploadPanel
             @loaded="handleFileLoaded"

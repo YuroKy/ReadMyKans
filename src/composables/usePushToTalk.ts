@@ -24,7 +24,7 @@ export const usePushToTalk = (opts: PushToTalkOptions): PushToTalkController => 
 
   const doRecognize = async () => {
     state.value = 'processing'
-    let text = ''
+    let text: string
     try {
       text = await opts.recognize()
     } catch {
@@ -41,7 +41,7 @@ export const usePushToTalk = (opts: PushToTalkOptions): PushToTalkController => 
     releaseRequested = false
     state.value = 'connecting'
 
-    let ok = false
+    let ok: boolean
     try {
       ok = await opts.start()
     } catch {

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { pathLength, totalLength, traceScore, passesTrace, dilate } from './strokeMatch'
+import { pathLength, totalLength, traceScore, passesTrace, dilate, tolerantTraceScore } from './strokeMatch'
 
 describe('pathLength / totalLength', () => {
   it('довжина прямої лінії', () => {
@@ -63,6 +63,33 @@ describe('passesTrace', () => {
 
   it('поважає кастомні пороги', () => {
     assert.equal(passesTrace({ covered: 0.5, spill: 0.5 }, { minCovered: 0.5, maxSpill: 0.5 }), true)
+  })
+})
+
+describe('tolerantTraceScore', () => {
+  // Вертикальна риска у стовпці 1 сітки 4x4.
+  const line = (col: number): boolean[] => {
+    const g = new Array<boolean>(16).fill(false)
+    for (let y = 0; y < 4; y += 1) g[y * 4 + col] = true
+    return g
+  }
+
+  it('точне обведення = повне покриття без виходу', () => {
+    const s = tolerantTraceScore(line(1), line(1), 4, 4)
+    assert.equal(s.covered, 1)
+    assert.equal(s.spill, 0)
+  })
+
+  it('штрих, зсунутий на одну клітинку, все одно зараховується', () => {
+    const s = tolerantTraceScore(line(1), line(2), 4, 4)
+    assert.equal(s.covered, 1)
+    assert.equal(s.spill, 0)
+  })
+
+  it('штрих далеко від гліфа — низьке покриття і spill', () => {
+    const s = tolerantTraceScore(line(0), line(3), 4, 4)
+    assert.equal(s.covered, 0)
+    assert.equal(s.spill, 1)
   })
 })
 

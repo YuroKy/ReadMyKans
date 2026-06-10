@@ -61,6 +61,22 @@ export interface TraceThresholds {
 export const passesTrace = (score: TraceScore, thresholds: TraceThresholds = {}): boolean =>
   score.covered >= (thresholds.minCovered ?? 0.6) && score.spill <= (thresholds.maxSpill ?? 0.5)
 
+// Tolerant scoring for tracing: a slightly-off hand is forgiven on both axes.
+// Coverage is judged against the RAW glyph but with the drawing dilated (a
+// stroke one cell away still «covers»); spill is judged against the DILATED
+// glyph (ink in the tolerance band around the glyph is not an overshoot).
+// Scoring coverage against the dilated glyph would do the opposite — inflate
+// the target area and fail accurate traces.
+export const tolerantTraceScore = (
+  target: boolean[],
+  drawn: boolean[],
+  width: number,
+  height: number,
+): TraceScore => ({
+  covered: traceScore(target, dilate(drawn, width, height)).covered,
+  spill: traceScore(dilate(target, width, height), drawn).spill,
+})
+
 // Grow every «on» cell into its 8 neighbours. Used to give the target glyph a
 // tolerance band so a slightly-off (but thick) pen stroke still counts.
 export const dilate = (grid: boolean[], width: number, height: number): boolean[] => {

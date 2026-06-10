@@ -53,6 +53,7 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
         <p class="eyebrow">Урок кани</p>
         <h1>Практика кани</h1>
         <span v-if="drillMode === 'srs'" class="srs-due-badge"> 🔁 На сьогодні: {{ srsDueCount }} </span>
+        <button class="ghost-button small drill-exit" type="button" @click="emit('exit')">← Вийти</button>
       </div>
       <div class="drill-controls">
         <div class="drill-format" role="group" aria-label="Формат тренування">
@@ -94,7 +95,6 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
             class="mic-gain-slider"
           >
         </label>
-        <button class="ghost-button small" type="button" @click="emit('exit')">Вийти</button>
       </div>
     </section>
 
@@ -238,6 +238,12 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
 </template>
 
 <style scoped>
+.drill-exit {
+  display: flex;
+  width: fit-content;
+  margin-top: 14px;
+}
+
 .drill-format {
   display: flex;
   flex-direction: column;

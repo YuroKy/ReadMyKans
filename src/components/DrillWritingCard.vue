@@ -2,9 +2,8 @@
 import { onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
 import {
-  dilate,
   passesTrace,
-  traceScore,
+  tolerantTraceScore,
   type Point,
 } from '../utils/strokeMatch'
 import SakuraDecor from './SakuraDecor.vue'
@@ -191,9 +190,8 @@ const check = () => {
     feedback.value = 'Намалюй кану повніше 🖌'
     return
   }
-  const target = dilate(rasterGlyph(expectedKana.value), GRID, GRID)
-  const drawn = rasterStrokes()
-  const ok = passesTrace(traceScore(target, drawn), { minCovered: 0.55, maxSpill: 0.55 })
+  const score = tolerantTraceScore(rasterGlyph(expectedKana.value), rasterStrokes(), GRID, GRID)
+  const ok = passesTrace(score, { minCovered: 0.6, maxSpill: 0.4 })
   feedback.value = ''
   answerWritten(ok)
 }

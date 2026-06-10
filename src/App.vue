@@ -56,7 +56,9 @@ const latestResult = ref<SessionResult | null>(null)
 const { history, addSession, clearHistory } = useSessionHistory()
 
 const { theme, toggleTheme } = useTheme()
-const { state: streak, recordActivity } = useStreak()
+const { state: streak, recordActivity, grantFreeze } = useStreak()
+// Драматизуємо межі стріку: згорів — траур, врятований заморозкою — полегшення.
+const streakBurstKey = ref(0)
 const {
   count: dailyCount,
   goal: dailyGoal,
@@ -98,7 +100,21 @@ const syncAchievements = () => {
 }
 
 onMounted(() => {
-  recordActivity()
+  const advance = recordActivity()
+  if (advance.event === 'burned' && advance.lost >= 2) {
+    streakBurstKey.value += 1
+    pushToast({
+      icon: '💔',
+      title: `Стрік згорів: −${advance.lost} ${streakWord(advance.lost)}`,
+      text: 'Усе спочатку. Заморозки заробляються бездоганними сесіями.',
+    })
+  } else if (advance.event === 'frozen') {
+    pushToast({
+      icon: '🧊',
+      title: 'Заморозку витрачено',
+      text: `Стрік урятовано: ${advance.state.streak} ${streakWord(advance.state.streak)} живе далі.`,
+    })
+  }
   syncAchievements()
 })
 
@@ -172,6 +188,14 @@ const handleSessionFinished = (result: SessionResult) => {
   })
   // A finished reading session is worth a few cards toward today's goal.
   if (dailyAdd(3)) pushToast(GOAL_TOAST)
+  // Бездоганне читання теж заробляє заморозку стріку.
+  if (result.accuracy >= 100 && grantFreeze()) {
+    pushToast({
+      icon: '🧊',
+      title: '+1 заморозка стріку',
+      text: 'За бездоганне читання. Врятує стрік, якщо пропустиш день.',
+    })
+  }
   syncAchievements()
   view.value = 'result'
 }
@@ -212,10 +236,19 @@ const newSession = () => {
       <div class="topbar-actions">
         <span
           v-if="streak.streak > 0"
+          :key="streakBurstKey"
           class="streak-badge"
+          :class="{ mourning: streakBurstKey > 0 }"
           :title="`Сьогодні активностей: ${streak.todayCount}`"
         >
           🔥 {{ streak.streak }} {{ streakWord(streak.streak) }}
+        </span>
+        <span
+          v-if="streak.freezes > 0"
+          class="streak-badge freeze-badge"
+          :title="'Заморозки рятують стрік від пропущеного дня'"
+        >
+          🧊 ×{{ streak.freezes }}
         </span>
         <span
           class="daily-badge"

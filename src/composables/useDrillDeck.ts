@@ -7,6 +7,7 @@ import { useDailyProgress } from './useDailyProgress'
 import { useBestScores } from './useBestScores'
 import { useDrillPrefs } from './useDrillPrefs'
 import { useFormatsSeen } from './useFormatsSeen'
+import { useStreak } from './useStreak'
 import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
@@ -306,6 +307,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   const headline = computed(() => encouragement(accuracy.value))
 
   // Деку кінець — фіксуємо, як саме тренувались і з яким результатом.
+  const { grantFreeze } = useStreak()
   watch(isFinished, (finished) => {
     if (finished) recordBest('drill:combo', sessionBestCombo.value)
     if (finished && total.value > 0) {
@@ -315,6 +317,14 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
         cards: total.value,
         accuracy: accuracy.value,
       })
+      // Бездоганна сесія від 10 карток заробляє заморозку стріку (до капу).
+      if (accuracy.value === 100 && cardsDenominator.value >= 10 && grantFreeze()) {
+        toasts.push({
+          icon: '🧊',
+          title: '+1 заморозка стріку',
+          text: 'За бездоганну сесію. Вона врятує стрік, якщо пропустиш день.',
+        })
+      }
     }
   })
 

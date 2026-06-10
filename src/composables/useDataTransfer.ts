@@ -12,6 +12,7 @@ const KEYS = [
   'kana-drill-prefs',
   'kana-activity',
   'kana-reading-progress',
+  'kana-reading-hide',
 ]
 
 export interface ExportBundle {

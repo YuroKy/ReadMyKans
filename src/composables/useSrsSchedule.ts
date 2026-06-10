@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { dueKana, nextCard, todayString, type SrsMap } from '../utils/srsSchedule'
+import { dueKana, nextCard, todayString, type SrsMap } from '../utils/srs'
 
 const KEY = 'kana-srs'
 

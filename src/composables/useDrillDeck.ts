@@ -9,6 +9,7 @@ import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
+import { translationFor } from '../data/vocabulary'
 import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
 import { track } from '../utils/analytics'
@@ -42,15 +43,20 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     if (typeof window !== 'undefined') localStorage.setItem(FORMAT_KEY, value)
   })
 
+  // Source axis is declared before chunking: the «vocab» mode forces
+  // whole-word cards (a vocabulary card is the word, not a slice of it).
+  const drillMode = ref('text')
+
   const chunkSize = ref(1)
   const isSingleKanaFormat = computed(() => SINGLE_KANA_FORMATS.includes(format.value))
+  const isWordMode = computed(() => drillMode.value === 'vocab')
   const effectiveChunkSize = computed(() => {
     if (isSingleKanaFormat.value) return 1
+    if (isWordMode.value) return Number.MAX_SAFE_INTEGER
     return chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
   })
 
   // --- Source axis -----------------------------------------------------------
-  const drillMode = ref('text')
   const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
 
   const { record: srsRecord, due: srsDue } = useSrsSchedule()
@@ -93,6 +99,11 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   } = useKanaDrill(sourceRef, effectiveChunkSize)
 
   const isSingleKana = computed(() => currentChunk.value.length === 1)
+
+  // Переклад картки у словниковому режимі ('' поза ним або без збігу).
+  const currentTranslation = computed(() =>
+    isWordMode.value ? translationFor(expectedKana.value) : '',
+  )
 
   // --- Stats & SRS recording -------------------------------------------------
   const stats = useKanaStats()
@@ -241,6 +252,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     format,
     chunkSize,
     isSingleKanaFormat,
+    isWordMode,
     chunkLabel,
     drillMode,
     kanaSets,
@@ -259,6 +271,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     lastOutcome,
     lastAnswer,
     isSingleKana,
+    currentTranslation,
     // answering
     answerRomaji,
     answerVoice,

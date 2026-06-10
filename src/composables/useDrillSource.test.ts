@@ -20,6 +20,15 @@ describe('useDrillSource', () => {
     assert.equal(effectiveKana.value, null)
   })
 
+  it('режим vocab повертає слова словника через повноширинний пробіл', () => {
+    const mode = ref('vocab')
+    const { effectiveKana } = useDrillSource(mode)
+    const words = effectiveKana.value!.split('　')
+    assert.ok(words.length >= 80)
+    assert.ok(words.includes('ねこ'))
+    assert.ok(words.every((word) => word.length > 0))
+  })
+
   it('режими weak і confusions будуються з накопиченої статистики', () => {
     const { record } = useKanaStats()
     record('ぬ', false, 'め')

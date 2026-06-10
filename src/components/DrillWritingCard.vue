@@ -8,6 +8,7 @@ import {
   type Point,
 } from '../utils/strokeMatch'
 import SakuraDecor from './SakuraDecor.vue'
+import StrokeOrderHint from './StrokeOrderHint.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -29,6 +30,27 @@ const GLYPH_BASELINE = SIZE / 2 + SIZE * 0.04
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const showGuide = ref(true)
 const feedback = ref('')
+
+// --- Підказка порядку рисок (KanjiVG) ---------------------------------------
+const showStrokeHint = ref(false)
+const strokeHintAvailable = ref(false)
+let strokeData: Record<string, string[]> | null = null
+
+const refreshStrokeAvailability = async () => {
+  if (!strokeData) {
+    try {
+      strokeData = (await import('../data/kanaStrokes')).KANA_STROKES
+    } catch {
+      strokeData = {}
+    }
+  }
+  strokeHintAvailable.value = (strokeData[expectedKana.value] ?? []).length > 0
+}
+
+// Після помилки порядок рисок показуємо самі — це і є навчальний момент.
+watch(lastOutcome, (outcome) => {
+  if (outcome === 'wrong' && strokeHintAvailable.value) showStrokeHint.value = true
+})
 
 const strokes = ref<Point[][]>([])
 const inkLength = ref(0)
@@ -185,12 +207,17 @@ watch([index, sessionToken], () => {
   strokes.value = []
   inkLength.value = 0
   feedback.value = ''
+  showStrokeHint.value = false
+  void refreshStrokeAvailability()
   redraw()
 })
 
 watch(showGuide, redraw)
 
-onMounted(redraw)
+onMounted(() => {
+  void refreshStrokeAvailability()
+  redraw()
+})
 </script>
 
 <template>
@@ -216,6 +243,7 @@ onMounted(redraw)
         @pointercancel="onPointerUp"
         @pointerleave="onPointerUp"
       />
+      <StrokeOrderHint v-if="showStrokeHint" :kana="expectedKana" />
     </div>
 
     <p v-if="feedback" class="drill-write-feedback-note">{{ feedback }}</p>
@@ -228,6 +256,14 @@ onMounted(redraw)
         @click="showGuide = !showGuide"
       >
         {{ showGuide ? 'Сховати зразок' : 'Показати зразок' }}
+      </button>
+      <button
+        v-if="strokeHintAvailable"
+        class="ghost-button small"
+        type="button"
+        @click="showStrokeHint = !showStrokeHint"
+      >
+        {{ showStrokeHint ? 'Сховати риски' : 'Порядок рисок' }}
       </button>
       <button class="ghost-button small" type="button" @click="skip">Пропустити</button>
       <button class="primary-button" type="button" @click="check">Перевірити</button>

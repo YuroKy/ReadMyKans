@@ -36,6 +36,30 @@ test('дрил: відповідь ромадзі зараховується', a
   await expect(page.locator('.drill-feedback.ok')).toBeVisible()
 })
 
+test('словниковий дрил показує переклад після відповіді', async ({ page }) => {
+  await page.goto('/#/drill')
+  await page.getByRole('button', { name: 'Впізнавання' }).click()
+  await page.getByLabel('Джерело').selectOption('vocab')
+
+  await page.getByRole('button', { name: 'Показати підказку' }).click()
+  const romaji = await page.locator('.drill-hint b').textContent()
+  await page.getByPlaceholder('Введіть ромадзі (напр. mu)').fill(romaji ?? '')
+  await page.getByRole('button', { name: 'Перевірити' }).click()
+
+  await expect(page.locator('.drill-feedback.ok')).toContainText('📖')
+})
+
+test('письмо: показує анімований порядок рисок', async ({ page }) => {
+  await page.goto('/#/drill')
+  await page.getByRole('button', { name: 'Письмо' }).click()
+
+  await page.getByRole('button', { name: 'Порядок рисок' }).click()
+  await expect(page.locator('.stroke-hint path').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'Сховати риски' }).click()
+  await expect(page.locator('.stroke-hint')).toHaveCount(0)
+})
+
 test('кнопка «назад» повертає з дрила на setup', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Тренувати кану' }).click()

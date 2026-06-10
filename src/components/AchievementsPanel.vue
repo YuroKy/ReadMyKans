@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { ACHIEVEMENTS } from '../utils/achievements'
 import { useAchievements } from '../composables/useAchievements'
+import AchievementIcon from './AchievementIcon.vue'
 
 // Тизер на setup-екрані: лічильник + останні розлоки; повний каталог із
 // прогресом живе на сторінці #/achievements.
@@ -33,13 +34,8 @@ const recent = computed(() =>
     </div>
 
     <div v-if="recent.length" class="ach-recent">
-      <span
-        v-for="a in recent"
-        :key="a.id"
-        class="ach-recent-icon"
-        :title="`${a.title} — ${a.description}`"
-      >
-        {{ a.icon }}
+      <span v-for="a in recent" :key="a.id" :title="`${a.title} — ${a.description}`">
+        <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="true" :size="44" />
       </span>
     </div>
     <p v-else class="muted compact">Ще нічого не відкрито — все попереду.</p>
@@ -59,16 +55,6 @@ const recent = computed(() =>
 .ach-recent {
   display: flex;
   gap: 10px;
-}
-
-.ach-recent-icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--rose);
-  font-size: 1.5rem;
 }
 
 .ach-open {

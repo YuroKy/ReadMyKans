@@ -4,6 +4,7 @@ import { ACHIEVEMENTS } from '../utils/achievements'
 import { useAchievements } from '../composables/useAchievements'
 import { useProgressSnapshot } from '../composables/useProgressSnapshot'
 import SakuraDecor from './SakuraDecor.vue'
+import AchievementIcon from './AchievementIcon.vue'
 
 const emit = defineEmits<{ exit: [] }>()
 
@@ -57,9 +58,7 @@ const items = computed(() =>
         class="panel ach-card"
         :class="{ locked: !a.unlocked }"
       >
-        <span class="ach-card-icon" :class="{ grey: !a.unlocked }" aria-hidden="true">
-          {{ a.icon }}
-        </span>
+        <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="a.unlocked" :size="52" />
         <div class="ach-card-body">
           <h2>{{ a.title }}</h2>
           <p>{{ a.description }}</p>
@@ -104,17 +103,6 @@ const items = computed(() =>
 
 .ach-card.locked {
   opacity: 0.75;
-}
-
-.ach-card-icon {
-  font-size: 2.2rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.ach-card-icon.grey {
-  filter: grayscale(1);
-  opacity: 0.5;
 }
 
 .ach-card-body {

@@ -27,6 +27,7 @@ import { isoWeek, attemptedThisWeek } from './utils/exam'
 import DebtRansomPanel from './components/DebtRansomPanel.vue'
 import ExamSession from './components/ExamSession.vue'
 import AchievementsPage from './components/AchievementsPage.vue'
+import AchievementIcon from './components/AchievementIcon.vue'
 import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
@@ -105,6 +106,7 @@ const syncAchievements = () => {
       track('achievement-unlock', { achievement: id })
       pushToast({
         icon: achievement.icon,
+        achievementId: id,
         title: `Досягнення: ${achievement.title}`,
         text: achievement.description,
       })
@@ -429,7 +431,14 @@ const newSession = () => {
 
     <div class="toast-stack" aria-live="polite">
       <div v-for="t in toasts" :key="t.id" class="app-toast" role="status">
-        <span class="app-toast-icon" aria-hidden="true">{{ t.icon }}</span>
+        <AchievementIcon
+          v-if="t.achievementId"
+          :id="t.achievementId"
+          :icon="t.icon"
+          :unlocked="true"
+          :size="36"
+        />
+        <span v-else class="app-toast-icon" aria-hidden="true">{{ t.icon }}</span>
         <div class="app-toast-body">
           <strong>{{ t.title }}</strong>
           <span v-if="t.text">{{ t.text }}</span>

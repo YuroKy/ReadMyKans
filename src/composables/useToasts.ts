@@ -5,6 +5,8 @@ export interface Toast {
   icon?: string
   title: string
   text?: string
+  // Якщо тост святкує ачивку — хост рендерить SVG-медальйон замість emoji.
+  achievementId?: string
 }
 
 // Module-level singleton queue so any composable can raise a celebratory toast

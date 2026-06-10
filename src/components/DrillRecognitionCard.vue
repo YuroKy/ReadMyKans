@@ -22,6 +22,7 @@ const {
   lastAnswer,
   lastConfused,
   isSingleKana,
+  currentTranslation,
   stats,
   index,
   sessionToken,
@@ -203,12 +204,14 @@ onMounted(() => focusInput())
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
       <strong>✓ Правильно!</strong>
       <span>{{ expectedKana }} = {{ expectedRomaji }}</span>
+      <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
     </div>
 
     <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
       <strong>✗ Не зараховано</strong>
       <span>Ви назвали: <b>{{ youSaidRomaji || '—' }}</b></span>
       <span>Правильно: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
+      <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
 
       <p v-if="contrast" class="drill-contrast">
         {{ contrast.note }}

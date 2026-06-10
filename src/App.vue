@@ -301,7 +301,11 @@ const newSession = () => {
     />
 
     <footer class="site-footer">
-      <span>© 2026 Yurii Fedelesh · ReadMyKans</span>
+      <span>
+        © 2026 Yurii Fedelesh · ReadMyKans · риски:
+        <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>
+        (CC BY-SA)
+      </span>
     </footer>
 
     <div v-if="needRefresh" class="update-toast" role="status">

@@ -72,12 +72,14 @@ ReadMyKans/
 - **Бібліотека текстів** (`data/library.ts` + `TextLibraryPanel.vue`): градуйовані готові тексти на setup-екрані; вибір сетить `sourceText`. Тексти — кана з повноширинними пробілами (чанкінг ріже по словах).
 
 ### Дрил (KanaDrill) — дві осі: **джерело × формат**
-- **Джерело** (`drillMode` + `useDrillSource`): _які_ кани — весь текст / SRS на сьогодні / слабкі / плутанини / набори.
+- **Джерело** (`drillMode` + `useDrillSource`): _які_ кани — весь текст / SRS на сьогодні / слабкі / плутанини / словник N5 / набори.
+- **Словник N5** (`data/vocabulary.ts`, режим `vocab`): слова чистою каною з укр. перекладом; джерело віддає їх через повноширинний пробіл (першими — слова з найтерміновішою каною), дека форсує чанк «ціле слово» (`isWordMode`), картки recognition/dictation показують `currentTranslation` у фідбеку. `translationFor` індексує і катакана-, і хіраґана-форму (kuromoji зводить читання до хіраґани). Слово-рівневі результати **не** пишуться у `kana-stats` (інакше слова зламали б режим «слабкі»).
+- **SRS — один модуль `utils/srs.ts`**: Leitner-розклад (`kana-srs`: `nextCard`/`dueKana`, живить режим «на сьогодні») + комбінований `reviewPriority(stat, card, today)` — прострочені за розкладом (100+) → слабкі за `kana-stats` (0..15, нові=3) → заплановані на майбутнє «відпочивають» (≤2). `orderBySrs(kana, stats, schedule, today)` сортує всі цільові джерела дрила. Сховища `kana-stats` і `kana-srs` окремі — зберігають різне (точність/плутанини vs розклад).
 - **Формат** (`useDrillDeck.format`, persisted): _як_ перевіряти. Спільний стан (навігація, stats/SRS, підсумок) — у **`useDrillDeck`**; формати — тонкі компоненти, що отримують `deck` пропом і кличуть `answer*`/`skip`/`restart`:
   - `recognition` → `DrillRecognitionCard` (бачиш кану → ромадзі `answerRomaji` / голос `answerVoice`)
   - `dictation` → `DrillDictationCard` (TTS `speakKana` → ввід ромадзі)
   - `choice` → `DrillChoiceCard` (ромадзі/звук → 4 плитки з `buildDistractors`; хибний тап → `confusedWith` + контраст)
-  - `writing` → `DrillWritingCard` (обведення на canvas; оцінка через `strokeMatch` покриттям гліфа, **не** порядком рисок)
+  - `writing` → `DrillWritingCard` (обведення на canvas; оцінка через `strokeMatch` покриттям гліфа, **не** порядком рисок). Підказка порядку рисок — `StrokeOrderHint.vue` поверх полотна (кнопка + автопоказ після помилки): дані `data/kanaStrokes.ts` **згенеровано** `scripts/build-strokes.mjs` із KanjiVG (CC BY-SA, атрибуція у футері), вантажаться ледачим `import()`; якщо гліфа немає — кнопка ховається.
 - `choice`/`writing` — завжди single-kana (`effectiveChunkSize=1`). Письмо/вибір фіксують результат через `answerKana`/`answerWritten` (→ `useKanaDrill.submitOutcome`).
 - `useKanaDrill(sourceText, chunkSize)` → ріже читання джерела на шматки по `chunkSize` кан.
 - `submitKana` пробує СИРИЙ текст і читання (kuromoji) — бо kuromoji вважає ізольовану は часткою → わ (хибна помилка), тому сире は теж приймається.

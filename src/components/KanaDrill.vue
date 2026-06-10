@@ -16,6 +16,7 @@ const {
   format,
   chunkSize,
   isSingleKanaFormat,
+  isWordMode,
   chunkLabel,
   drillMode,
   kanaSets,
@@ -76,12 +77,13 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
             <option value="srs">Повторення на сьогодні</option>
             <option value="weak">Слабкі кани</option>
             <option value="confusions">Мої плутанини</option>
+            <option value="vocab">Словник N5</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
             </optgroup>
           </select>
         </label>
-        <label v-if="!isSingleKanaFormat" class="drill-size">
+        <label v-if="!isSingleKanaFormat && !isWordMode" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
             v-model.number="chunkSize"

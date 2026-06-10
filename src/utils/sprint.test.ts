@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { pickTarget, SPRINT_DURATION } from './sprint'
+import { bestKeyFor, pickTarget, SPRINT_DURATION } from './sprint'
 
 describe('pickTarget', () => {
   it('порожній пул → порожній рядок', () => {
@@ -24,5 +24,12 @@ describe('pickTarget', () => {
 
   it('тривалість — 60 секунд', () => {
     assert.equal(SPRINT_DURATION, 60)
+  })
+})
+
+describe('bestKeyFor', () => {
+  it('режими мають окремі ключі рекордів', () => {
+    assert.equal(bestKeyFor('classic'), 'sprint:overall')
+    assert.equal(bestKeyFor('suddendeath'), 'sprint:suddendeath')
   })
 })

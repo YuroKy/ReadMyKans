@@ -10,6 +10,7 @@ const base: ProgressSnapshot = {
   hiraganaMasteredPct: 0,
   katakanaMasteredPct: 0,
   bestSprint: 0,
+  bestSuddenDeath: 0,
   formatsSeen: [],
 }
 
@@ -51,9 +52,19 @@ describe('achievements.evaluate', () => {
       hiraganaMasteredPct: 100,
       katakanaMasteredPct: 100,
       bestSprint: 99,
+      bestSuddenDeath: 99,
       formatsSeen: ['recognition', 'dictation', 'choice', 'writing'],
     })
     assert.equal(ids.length, ACHIEVEMENTS.length)
+  })
+
+  it('sudden-death серія не зараховується як спідран і навпаки', () => {
+    const ids = evaluate({ ...base, bestSuddenDeath: 15 })
+    assert.ok(ids.includes('suddendeath-15'))
+    assert.ok(!ids.includes('sprint-30'))
+    const sprintIds = evaluate({ ...base, bestSprint: 30 })
+    assert.ok(sprintIds.includes('sprint-30'))
+    assert.ok(!sprintIds.includes('suddendeath-15'))
   })
 })
 

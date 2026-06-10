@@ -10,6 +10,7 @@ export interface ProgressSnapshot {
   hiraganaMasteredPct: number // 0..100
   katakanaMasteredPct: number // 0..100
   bestSprint: number // best time-attack score
+  bestSuddenDeath: number // best sudden-death streak
   formatsSeen: string[] // drill formats the learner has tried
 }
 
@@ -79,6 +80,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'Набрати 30+ у спідрані',
     icon: '⚡',
     test: (s) => s.bestSprint >= 30,
+  },
+  {
+    id: 'suddendeath-15',
+    title: 'Сапер',
+    description: 'Серія 15+ у раптовій смерті',
+    icon: '💀',
+    test: (s) => s.bestSuddenDeath >= 15,
   },
   {
     id: 'all-formats',

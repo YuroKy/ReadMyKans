@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { buildKanaSets, findKanaSet } from '../utils/kanaSets'
+import type { SprintMode } from '../utils/sprint'
 import { useSprint } from '../composables/useSprint'
 import { track } from '../utils/analytics'
 import SakuraDecor from './SakuraDecor.vue'
@@ -9,6 +10,7 @@ const emit = defineEmits<{ exit: []; finish: [] }>()
 
 const sets = buildKanaSets()
 const selectedSetId = ref('hiragana')
+const mode = ref<SprintMode>('classic')
 const pool = computed(() => {
   const set = findKanaSet(selectedSetId.value)
   return set ? [...set.kana] : []
@@ -17,6 +19,7 @@ const pool = computed(() => {
 const {
   status,
   timeLeft,
+  isSuddenDeath,
   score,
   combo,
   bestCombo,
@@ -29,16 +32,17 @@ const {
   start,
   answer,
   reset,
-} = useSprint(pool)
+} = useSprint(pool, mode)
 
 // Let App reconcile achievements (e.g. «sprint 30+») when a run ends.
 watch(status, (s) => {
   if (s === 'running') {
-    track('sprint-start', { set: selectedSetId.value })
+    track('sprint-start', { set: selectedSetId.value, mode: mode.value })
   }
   if (s === 'finished') {
     track('sprint-finish', {
       set: selectedSetId.value,
+      mode: mode.value,
       score: score.value,
       bestCombo: bestCombo.value,
       newRecord: isNewRecord.value,
@@ -71,8 +75,31 @@ const exit = () => {
           <option v-for="set in sets" :key="set.id" :value="set.id">{{ set.label }}</option>
         </select>
       </label>
+      <div class="sprint-mode-toggle" role="group" aria-label="Режим спідрану">
+        <button
+          type="button"
+          class="mode-pill"
+          :class="{ active: mode === 'classic' }"
+          @click="mode = 'classic'"
+        >
+          ⏱️ Класика 60 с
+        </button>
+        <button
+          type="button"
+          class="mode-pill"
+          :class="{ active: mode === 'suddendeath' }"
+          @click="mode = 'suddendeath'"
+        >
+          💀 Раптова смерть
+        </button>
+      </div>
       <p class="muted compact">
-        За 60 секунд познач якомога більше кан правильно. Рекорд: <b>{{ previousBest }}</b>
+        <template v-if="mode === 'suddendeath'">
+          Без таймера. Одна помилка — і все. Рекорд серії: <b>{{ previousBest }}</b>
+        </template>
+        <template v-else>
+          За 60 секунд познач якомога більше кан правильно. Рекорд: <b>{{ previousBest }}</b>
+        </template>
       </p>
       <button class="primary-button" type="button" :disabled="pool.length === 0" @click="start">
         Старт
@@ -81,9 +108,13 @@ const exit = () => {
 
     <section v-else-if="status === 'running'" class="panel sprint-play">
       <div class="sprint-hud">
-        <div class="sprint-hud-item time" :class="{ low: timeLeft <= 10 }">
+        <div v-if="!isSuddenDeath" class="sprint-hud-item time" :class="{ low: timeLeft <= 10 }">
           <span class="eyebrow">Час</span>
           <strong>{{ timeLeft }}</strong>
+        </div>
+        <div v-else class="sprint-hud-item">
+          <span class="eyebrow">Режим</span>
+          <strong>💀</strong>
         </div>
         <div class="sprint-hud-item">
           <span class="eyebrow">Очки</span>
@@ -121,12 +152,12 @@ const exit = () => {
 
     <section v-else class="panel sprint-result">
       <SakuraDecor density="rich" />
-      <p class="eyebrow">Час вийшов</p>
+      <p class="eyebrow">{{ isSuddenDeath ? `Серія обірвалась на ${score}` : 'Час вийшов' }}</p>
       <h1>{{ isNewRecord ? '🏆 Новий рекорд!' : 'Готово!' }}</h1>
 
       <div class="accuracy-ring big" :style="{ '--score': '100%' }">
         <strong>{{ score }}</strong>
-        <span>очок</span>
+        <span>{{ isSuddenDeath ? 'серія' : 'очок' }}</span>
       </div>
 
       <div class="sprint-result-stats">
@@ -153,6 +184,29 @@ const exit = () => {
   gap: 14px;
   justify-items: start;
   padding: 24px;
+}
+
+.sprint-mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-pill {
+  border: 2px solid var(--divider);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.mode-pill.active {
+  border-color: var(--primary);
+  color: var(--ink);
+  background: var(--surface-inset);
 }
 
 .sprint-play {

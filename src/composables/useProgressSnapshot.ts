@@ -41,9 +41,13 @@ export const useProgressSnapshot = () => {
       totalCorrect += stat.correct
     }
 
+    // Sudden-death streaks live under their own key and must not count toward
+    // the time-attack achievement — an untimed streak is a different sport.
     let bestSprint = 0
     for (const [key, value] of Object.entries(scores.value)) {
-      if (key.startsWith('sprint:')) bestSprint = Math.max(bestSprint, value)
+      if (key.startsWith('sprint:') && key !== 'sprint:suddendeath') {
+        bestSprint = Math.max(bestSprint, value)
+      }
     }
 
     return {
@@ -54,6 +58,7 @@ export const useProgressSnapshot = () => {
       hiraganaMasteredPct: masterySummary(stats.value, HIRA).masteredPct,
       katakanaMasteredPct: masterySummary(stats.value, KATA).masteredPct,
       bestSprint,
+      bestSuddenDeath: scores.value['sprint:suddendeath'] ?? 0,
       formatsSeen: seen.value,
     }
   }

@@ -26,6 +26,7 @@ import { useExamHistory } from './composables/useExamHistory'
 import { isoWeek, attemptedThisWeek } from './utils/exam'
 import DebtRansomPanel from './components/DebtRansomPanel.vue'
 import ExamSession from './components/ExamSession.vue'
+import AchievementsPage from './components/AchievementsPage.vue'
 import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
@@ -378,7 +379,7 @@ const newSession = () => {
           <KanaStatsPanel :analysis="kanaAnalysis" />
           <DailyGoalPanel />
           <KanaMasteryPanel />
-          <AchievementsPanel />
+          <AchievementsPanel @open="view = 'achievements'" />
           <ActivityCalendar />
           <KanaReferenceTable />
           <AccuracyTrend :history="history" />
@@ -402,6 +403,8 @@ const newSession = () => {
     <MemoryGame v-else-if="view === 'memory'" @exit="editText" />
 
     <ExamSession v-else-if="view === 'exam'" @exit="editText" @finish="syncAchievements" />
+
+    <AchievementsPage v-else-if="view === 'achievements'" @exit="editText" />
 
     <ResultReview
       v-else-if="latestResult"

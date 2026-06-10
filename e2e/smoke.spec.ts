@@ -99,6 +99,12 @@ test('екзамен: диплінк відкриває інтро, спроба
   await expect(page.getByRole('heading', { level: 1, name: 'Kana Reader' })).toBeVisible()
 })
 
+test('сторінка досягнень рендерить сітку з прогресом', async ({ page }) => {
+  await page.goto('/#/achievements')
+  await expect(page.getByRole('heading', { name: '🏆 Досягнення' })).toBeVisible()
+  await expect(page.locator('.ach-card').first()).toBeVisible()
+})
+
 test('диплінк #/result без результату веде на setup', async ({ page }) => {
   await page.goto('/#/result')
   await expect(page.getByRole('heading', { level: 1, name: 'Kana Reader' })).toBeVisible()

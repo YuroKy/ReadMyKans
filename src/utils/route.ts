@@ -8,6 +8,7 @@ const HASH_BY_VIEW: Record<AppView, string> = {
   sprint: '#/sprint',
   memory: '#/memory',
   exam: '#/exam',
+  achievements: '#/achievements',
 }
 
 const VIEW_BY_PATH = new Map<string, AppView>(

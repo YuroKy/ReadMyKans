@@ -3,7 +3,16 @@ import assert from 'node:assert/strict'
 import { hashForView, viewForHash } from './route'
 import type { AppView } from '../types'
 
-const VIEWS: AppView[] = ['setup', 'reading', 'result', 'drill', 'sprint', 'memory', 'exam']
+const VIEWS: AppView[] = [
+  'setup',
+  'reading',
+  'result',
+  'drill',
+  'sprint',
+  'memory',
+  'exam',
+  'achievements',
+]
 
 describe('route', () => {
   it('round-trips every view through its hash', () => {

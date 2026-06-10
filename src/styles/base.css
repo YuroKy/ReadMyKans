@@ -2492,6 +2492,12 @@ h3 {
   color: var(--ink);
 }
 
+[data-theme='dark'] .result-badge {
+  background: rgba(79, 199, 168, 0.14);
+  color: var(--mint-strong);
+  box-shadow: inset 0 0 0 1px rgba(79, 199, 168, 0.38);
+}
+
 [data-theme='dark'] .kana-table .blank {
   background: #241f33;
   color: #5b5470;

@@ -75,6 +75,30 @@ test('диплінк #/drill відкриває дрил одразу', async ({
   await expect(page.getByRole('heading', { level: 1, name: 'Практика кани' })).toBeVisible()
 })
 
+test('екзамен: диплінк відкриває інтро, спроба цього тижня вето-редіректить', async ({ page }) => {
+  await page.goto('/#/exam')
+  await expect(page.getByRole('heading', { name: '🎓 Екзамен' })).toBeVisible()
+
+  // Зі складеним цього тижня екзаменом диплінк відбиває на setup.
+  await page.evaluate(() => {
+    const now = new Date()
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+    const dayNum = d.getUTCDay() || 7
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+    const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1)
+    const week = Math.ceil(((d.getTime() - yearStart) / 86_400_000 + 1) / 7)
+    const isoWeek = `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
+    localStorage.setItem(
+      'kana-exam',
+      JSON.stringify([{ week: isoWeek, date: now.toISOString(), correct: 45, total: 50, accuracy: 90, passed: true }]),
+    )
+  })
+  // goto на той самий URL не перезавантажує сторінку — потрібен reload.
+  await page.reload()
+  await expect(page).toHaveURL(/#\/$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Kana Reader' })).toBeVisible()
+})
+
 test('диплінк #/result без результату веде на setup', async ({ page }) => {
   await page.goto('/#/result')
   await expect(page.getByRole('heading', { level: 1, name: 'Kana Reader' })).toBeVisible()

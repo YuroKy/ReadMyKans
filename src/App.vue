@@ -22,7 +22,10 @@ import { useSessionHistory } from './composables/useSessionHistory'
 import { useTheme } from './composables/useTheme'
 import { useStreak } from './composables/useStreak'
 import { useGameLock } from './composables/useGameLock'
+import { useExamHistory } from './composables/useExamHistory'
+import { isoWeek, attemptedThisWeek } from './utils/exam'
 import DebtRansomPanel from './components/DebtRansomPanel.vue'
+import ExamSession from './components/ExamSession.vue'
 import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
@@ -71,6 +74,8 @@ const { sync: syncAchievementsStore } = useAchievements()
 const { build: buildSnapshot } = useProgressSnapshot()
 const { toasts, push: pushToast, dismiss: dismissToast } = useToasts()
 const { locked: gamesAreLocked, debtCount, ransomInProgress } = useGameLock()
+const { records: examRecords } = useExamHistory()
+const examTakenThisWeek = computed(() => attemptedThisWeek(examRecords.value, isoWeek()))
 const { canInstall, promptInstall } = usePwaInstall()
 const { needRefresh, refresh } = usePwaUpdate()
 
@@ -80,6 +85,8 @@ useHashRoute(view, (target) => {
   if ((target === 'reading' || target === 'drill') && !sourceText.value.trim()) return 'setup'
   // Борг SRS замикає міні-ігри і через диплінки теж.
   if ((target === 'sprint' || target === 'memory') && gamesAreLocked.value) return 'setup'
+  // Екзамен — одна спроба на тиждень, диплінком теж не обійдеш.
+  if (target === 'exam' && examTakenThisWeek.value) return 'setup'
   return target
 })
 
@@ -180,6 +187,19 @@ const startMemory = () => {
   }
   setupError.value = ''
   view.value = 'memory'
+}
+
+const startExam = () => {
+  if (examTakenThisWeek.value) {
+    pushToast({
+      icon: '🗓',
+      title: 'Екзамен уже складався цього тижня',
+      text: 'Одна спроба на тиждень. Побачимось у понеділок.',
+    })
+    return
+  }
+  setupError.value = ''
+  view.value = 'exam'
 }
 
 const handleLibrarySelect = (entry: LibraryText) => {
@@ -329,6 +349,15 @@ const newSession = () => {
           >
             {{ gamesAreLocked ? '🔒' : '🎴' }} Пари
           </button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': examTakenThisWeek }"
+            type="button"
+            :title="examTakenThisWeek ? 'Уже складався цього тижня' : '50 кан, без підказок, одна спроба на тиждень'"
+            @click="startExam"
+          >
+            🎓 Екзамен
+          </button>
         </div>
       </section>
 
@@ -371,6 +400,8 @@ const newSession = () => {
     <SprintSession v-else-if="view === 'sprint'" @exit="editText" @finish="syncAchievements" />
 
     <MemoryGame v-else-if="view === 'memory'" @exit="editText" />
+
+    <ExamSession v-else-if="view === 'exam'" @exit="editText" @finish="syncAchievements" />
 
     <ResultReview
       v-else-if="latestResult"

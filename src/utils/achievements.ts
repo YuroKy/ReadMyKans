@@ -11,6 +11,7 @@ export interface ProgressSnapshot {
   katakanaMasteredPct: number // 0..100
   bestSprint: number // best time-attack score
   bestSuddenDeath: number // best sudden-death streak
+  bestDrillCombo: number // longest correct streak within a drill session
   formatsSeen: string[] // drill formats the learner has tried
 }
 
@@ -80,6 +81,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'Набрати 30+ у спідрані',
     icon: '⚡',
     test: (s) => s.bestSprint >= 30,
+  },
+  {
+    id: 'combo-20',
+    title: 'Серійний',
+    description: '20 правильних поспіль у дрилі',
+    icon: '🔥',
+    test: (s) => s.bestDrillCombo >= 20,
   },
   {
     id: 'suddendeath-15',

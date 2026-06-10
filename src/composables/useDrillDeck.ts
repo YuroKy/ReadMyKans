@@ -4,6 +4,7 @@ import { useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { useDailyProgress } from './useDailyProgress'
+import { useBestScores } from './useBestScores'
 import { useFormatsSeen } from './useFormatsSeen'
 import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
@@ -127,10 +128,31 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const dailyProgress = useDailyProgress()
   const toasts = useToasts()
+  const { record: recordBest } = useBestScores()
+
+  // Streak of correct answers within the session. Burning a built-up combo is
+  // the dramatic moment, so the loss gets a toast and a UI burst signal.
+  const combo = ref(0)
+  const sessionBestCombo = ref(0)
+  const comboBurst = ref(0) // bumped when a combo ≥5 burns; KanaDrill animates on it
+  const trackCombo = (outcome: DrillOutcome) => {
+    if (outcome === 'correct') {
+      combo.value += 1
+      if (combo.value > sessionBestCombo.value) sessionBestCombo.value = combo.value
+      return
+    }
+    if (combo.value >= 5) {
+      toasts.push({ icon: '💔', title: `Комбо ×${combo.value} згоріло`, text: 'Серія обнулилась. Починай спочатку.' })
+      comboBurst.value += 1
+    }
+    recordBest('drill:combo', sessionBestCombo.value)
+    combo.value = 0
+  }
 
   // Auto-advance after a correct answer (same 800ms beat across formats). Every
   // answered card counts toward the daily goal; crossing it celebrates once.
   const handleOutcome = (outcome: DrillOutcome) => {
+    trackCombo(outcome)
     if (dailyProgress.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
     }
@@ -184,6 +206,8 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     reset()
     sessionPairs.value = []
     lastConfused.value = ''
+    combo.value = 0
+    sessionBestCombo.value = 0
     sessionToken.value += 1
   }
   const restart = () => resetSession()
@@ -211,6 +235,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   // Деку кінець — фіксуємо, як саме тренувались і з яким результатом.
   watch(isFinished, (finished) => {
+    if (finished) recordBest('drill:combo', sessionBestCombo.value)
     if (finished && total.value > 0) {
       track('drill-finish', {
         format: format.value,
@@ -287,6 +312,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     // stats / cues
     stats,
     lastConfused,
+    combo,
+    sessionBestCombo,
+    comboBurst,
     // summary
     wrongCount,
     accuracy,

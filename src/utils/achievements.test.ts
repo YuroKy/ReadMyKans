@@ -11,6 +11,7 @@ const base: ProgressSnapshot = {
   katakanaMasteredPct: 0,
   bestSprint: 0,
   bestSuddenDeath: 0,
+  bestDrillCombo: 0,
   formatsSeen: [],
 }
 
@@ -53,9 +54,15 @@ describe('achievements.evaluate', () => {
       katakanaMasteredPct: 100,
       bestSprint: 99,
       bestSuddenDeath: 99,
+      bestDrillCombo: 99,
       formatsSeen: ['recognition', 'dictation', 'choice', 'writing'],
     })
     assert.equal(ids.length, ACHIEVEMENTS.length)
+  })
+
+  it('комбо-пороги', () => {
+    assert.ok(!evaluate({ ...base, bestDrillCombo: 19 }).includes('combo-20'))
+    assert.ok(evaluate({ ...base, bestDrillCombo: 20 }).includes('combo-20'))
   })
 
   it('sudden-death серія не зараховується як спідран і навпаки', () => {

@@ -59,6 +59,7 @@ export const useProgressSnapshot = () => {
       katakanaMasteredPct: masterySummary(stats.value, KATA).masteredPct,
       bestSprint,
       bestSuddenDeath: scores.value['sprint:suddendeath'] ?? 0,
+      bestDrillCombo: scores.value['drill:combo'] ?? 0,
       formatsSeen: seen.value,
     }
   }

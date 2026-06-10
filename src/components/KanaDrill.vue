@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
@@ -35,8 +35,22 @@ const {
   donutGradient,
   drillConfusions,
   weakSummary,
+  combo,
+  comboBurst,
   restart,
 } = deck
+
+// Короткий сплеск анімації, коли комбо згоріло.
+const comboShake = ref(false)
+watch(comboBurst, () => {
+  comboShake.value = false
+  requestAnimationFrame(() => {
+    comboShake.value = true
+    window.setTimeout(() => {
+      comboShake.value = false
+    }, 600)
+  })
+})
 
 const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'recognition', label: 'Розпізнавання', hint: 'Бачиш кану → називаєш звук' },
@@ -105,6 +119,9 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
 
     <section v-if="!isFinished && !srsEmpty" class="panel drill-progress">
       <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
+      <span class="drill-combo" :class="{ hot: combo >= 3, shake: comboShake }">
+        {{ combo >= 3 ? `🔥 ×${combo}` : combo > 0 ? `×${combo}` : '' }}
+      </span>
       <strong>{{ correctCount }} правильних</strong>
     </section>
 
@@ -276,6 +293,31 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
+}
+
+.drill-combo {
+  min-width: 3.5em;
+  text-align: center;
+  font-weight: 800;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.drill-combo.hot {
+  color: var(--primary);
+}
+
+.drill-combo.shake {
+  animation: combo-shake 0.5s ease;
+  color: var(--rose-strong);
+}
+
+@keyframes combo-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
 }
 
 .drill-mode-note {

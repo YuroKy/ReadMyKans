@@ -23,6 +23,22 @@ export const chunkKanaByWords = (words: string[][], size: number): string[][] =>
   return chunks
 }
 
+// Наступний шматок із наскрізної позиції `offset` (кани рахуються через усі
+// слова підряд), не перетинаючи межу слова — основа «зростаючого чанка», де
+// розмір міняється після кожної відповіді й статичне нарізання не годиться.
+export const takeChunk = (words: string[][], offset: number, size: number): string[] => {
+  const n = Math.max(1, Math.floor(size))
+  let acc = 0
+  for (const word of words) {
+    if (offset < acc + word.length) {
+      const pos = offset - acc
+      return word.slice(pos, pos + n)
+    }
+    acc += word.length
+  }
+  return []
+}
+
 const KUNREI_TO_HEPBURN: Array<[string, string]> = [
   ['sya', 'sha'],
   ['syu', 'shu'],

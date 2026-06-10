@@ -58,6 +58,12 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     return chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
   })
 
+  // Зростаючий чанк має сенс лише там, де чанк взагалі багатоканний.
+  const { prefs } = useDrillPrefs()
+  const growingActive = computed(
+    () => prefs.value.growing && !isSingleKanaFormat.value && !isWordMode.value,
+  )
+
   // --- Source axis -----------------------------------------------------------
   const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
 
@@ -85,6 +91,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   const {
     total,
     index,
+    doneKana,
+    growSize,
+    answeredCount,
     currentChunk,
     expectedKana,
     expectedRomaji,
@@ -98,7 +107,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     next,
     retry,
     reset,
-  } = useKanaDrill(sourceRef, effectiveChunkSize)
+  } = useKanaDrill(sourceRef, effectiveChunkSize, growingActive)
 
   const isSingleKana = computed(() => currentChunk.value.length === 1)
 
@@ -154,6 +163,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // answered card counts toward the daily goal; crossing it celebrates once.
   const handleOutcome = (outcome: DrillOutcome) => {
     trackCombo(outcome)
+    if (outcome === 'correct' && growingActive.value) {
+      recordBest('drill:grow', currentChunk.value.length)
+    }
     if (dailyProgress.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
     }
@@ -167,7 +179,6 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // --- Per-card timer (recognition/dictation only) ----------------------------
   // The countdown lives in the deck so both text-input formats share one source
   // of truth; the card components only render the melting bar.
-  const { prefs } = useDrillPrefs()
   const timerEnabled = computed(
     () =>
       prefs.value.timer !== 'off' &&
@@ -260,7 +271,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     for (let i = 0; i < count && !isFinished.value; i += 1) next()
   }
 
-  watch([chunkSize, drillMode, format], resetSession)
+  watch([chunkSize, drillMode, format, growingActive], resetSession)
   watch(index, () => {
     lastConfused.value = ''
   })
@@ -281,9 +292,16 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   watch(format, (value) => track('drill-format-change', { format: value }))
 
   // --- Summary ---------------------------------------------------------------
-  const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))
+  // У зростаючому режимі кількість карток наперед невідома (залежить від
+  // довжин шматків) — знаменник точності тоді беремо з відповіданих карток.
+  const cardsDenominator = computed(() =>
+    growingActive.value ? answeredCount.value : total.value,
+  )
+  const wrongCount = computed(() => Math.max(0, cardsDenominator.value - correctCount.value))
   const accuracy = computed(() =>
-    total.value === 0 ? 0 : Math.round((correctCount.value / total.value) * 100),
+    cardsDenominator.value === 0
+      ? 0
+      : Math.round((correctCount.value / cardsDenominator.value) * 100),
   )
   const headline = computed(() => encouragement(accuracy.value))
 
@@ -345,6 +363,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     // navigation
     total,
     index,
+    doneKana,
+    growSize,
+    growingActive,
     currentChunk,
     expectedKana,
     expectedRomaji,

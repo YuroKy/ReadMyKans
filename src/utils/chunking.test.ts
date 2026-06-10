@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   chunkKana,
   chunkKanaByWords,
+  takeChunk,
   normalizeRomaji,
   checkRomajiAnswer,
   checkKanaAnswer,
@@ -59,6 +60,34 @@ describe('chunkKanaByWords', () => {
       ['む', 'か', 'し', 'む', 'か'],
       ['き'],
     ])
+  })
+})
+
+describe('takeChunk', () => {
+  const words = [chars('むかし'), chars('おじいさん'), chars('と')]
+
+  it('бере size кан з початку слова', () => {
+    assert.deepEqual(takeChunk(words, 0, 2), chars('むか'))
+  })
+
+  it('не перетинає межу слова (хвіст коротший за size)', () => {
+    assert.deepEqual(takeChunk(words, 2, 4), chars('し'))
+  })
+
+  it('наскрізний offset потрапляє в середину другого слова', () => {
+    assert.deepEqual(takeChunk(words, 4, 2), chars('じい'))
+  })
+
+  it('offset за кінцем — порожній шматок', () => {
+    assert.deepEqual(takeChunk(words, 9, 3), [])
+  })
+
+  it('порожні слова — порожній шматок', () => {
+    assert.deepEqual(takeChunk([], 0, 3), [])
+  })
+
+  it('size щонайменше 1', () => {
+    assert.deepEqual(takeChunk(words, 0, 0), chars('む'))
   })
 })
 

@@ -2,6 +2,7 @@
 import { ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
 import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
+import { useBestScores } from '../composables/useBestScores'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
 import DrillDictationCard from './DrillDictationCard.vue'
@@ -38,8 +39,13 @@ const {
   weakSummary,
   combo,
   comboBurst,
+  doneKana,
+  growSize,
+  growingActive,
   restart,
 } = deck
+
+const { best } = useBestScores()
 
 // Короткий сплеск анімації, коли комбо згоріло.
 const comboShake = ref(false)
@@ -155,7 +161,28 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             </button>
           </div>
         </div>
-        <label v-if="!isSingleKanaFormat && !isWordMode" class="drill-size">
+        <div v-if="!isSingleKanaFormat && !isWordMode" class="drill-format" role="group" aria-label="Режим шматка">
+          <span class="eyebrow">Шматок</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: !prefs.growing }"
+              title="Фіксований розмір шматка"
+              @click="prefs.growing = false"
+            >
+              Фіксований
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.growing }"
+              title="Росте на 1 кану після правильної відповіді, помилка скидає до 1"
+              @click="prefs.growing = true"
+            >
+              📈 Росте
+            </button>
+          </div>
+        </div>
+        <label v-if="!isSingleKanaFormat && !isWordMode && !growingActive" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
             v-model.number="chunkSize"
@@ -175,7 +202,11 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
     </p>
 
     <section v-if="!isFinished && !srsEmpty" class="panel drill-progress">
-      <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
+      <span v-if="growingActive">
+        Кана {{ Math.min(doneKana + 1, total) }} / {{ total }} · довжина <b>{{ growSize }}</b>
+        <small v-if="best('drill:grow') > 1" class="grow-record">рекорд {{ best('drill:grow') }}</small>
+      </span>
+      <span v-else>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
       <span class="drill-combo" :class="{ hot: combo >= 3, shake: comboShake }">
         {{ combo >= 3 ? `🔥 ×${combo}` : combo > 0 ? `×${combo}` : '' }}
       </span>
@@ -350,6 +381,11 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
   background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
+}
+
+.grow-record {
+  margin-left: 6px;
+  color: var(--muted);
 }
 
 .drill-combo {

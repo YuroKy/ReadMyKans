@@ -1,5 +1,5 @@
 import { computed, getCurrentInstance, onBeforeUnmount, ref, type Ref } from 'vue'
-import { pickTarget, SPRINT_DURATION } from '../utils/sprint'
+import { bestKeyFor, pickTarget, SPRINT_DURATION, type SprintMode } from '../utils/sprint'
 import { buildChoices } from '../utils/drillDistractors'
 import { kanaCharsEqual, kanaToRomaji } from '../utils/romaji'
 import { useKanaStats } from './useKanaStats'
@@ -11,8 +11,9 @@ export type SprintStatus = 'idle' | 'running' | 'finished'
 
 // 60-second time-attack: tap the kana that matches the prompt romaji, as many as
 // you can. Score = number correct; combo is flair that resets on a miss. Records
-// answers into the shared kana stats and tracks a personal best.
-export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
+// answers into the shared kana stats and tracks a personal best. In sudden-death
+// mode there is no clock — the run ends on the first mistake instead.
+export const useSprint = (pool: Ref<string[]>, mode?: Ref<SprintMode>) => {
   const stats = useKanaStats()
   const { record: recordBest, best } = useBestScores()
   const daily = useDailyProgress()
@@ -29,7 +30,8 @@ export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
   const isNewRecord = ref(false)
 
   const targetRomaji = computed(() => kanaToRomaji(target.value))
-  const previousBest = computed(() => best(bestKey))
+  const isSuddenDeath = computed(() => mode?.value === 'suddendeath')
+  const previousBest = computed(() => best(bestKeyFor(mode?.value ?? 'classic')))
 
   let timer: ReturnType<typeof setInterval> | null = null
 
@@ -49,7 +51,7 @@ export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
   const finish = () => {
     stopTimer()
     status.value = 'finished'
-    isNewRecord.value = recordBest(bestKey, score.value)
+    isNewRecord.value = recordBest(bestKeyFor(mode?.value ?? 'classic'), score.value)
   }
 
   const start = () => {
@@ -62,10 +64,13 @@ export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
     status.value = 'running'
     nextCard()
     stopTimer()
-    timer = setInterval(() => {
-      timeLeft.value -= 1
-      if (timeLeft.value <= 0) finish()
-    }, 1000)
+    // Sudden-death runs are untimed: the first mistake is the only clock.
+    if (!isSuddenDeath.value) {
+      timer = setInterval(() => {
+        timeLeft.value -= 1
+        if (timeLeft.value <= 0) finish()
+      }, 1000)
+    }
   }
 
   const answer = (chosen: string) => {
@@ -81,6 +86,11 @@ export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
       if (combo.value > bestCombo.value) bestCombo.value = combo.value
     } else {
       combo.value = 0
+      if (isSuddenDeath.value) {
+        lastCorrect.value = false
+        finish()
+        return
+      }
     }
     lastCorrect.value = ok
     nextCard()
@@ -99,6 +109,7 @@ export const useSprint = (pool: Ref<string[]>, bestKey = 'sprint:overall') => {
   return {
     status,
     timeLeft,
+    isSuddenDeath,
     score,
     combo,
     bestCombo,

@@ -1,10 +1,13 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { useKanaDrill } from './useKanaDrill'
 import { useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { useDailyProgress } from './useDailyProgress'
+import { useBestScores } from './useBestScores'
+import { useDrillPrefs } from './useDrillPrefs'
 import { useFormatsSeen } from './useFormatsSeen'
+import { useStreak } from './useStreak'
 import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
@@ -56,6 +59,12 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     return chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
   })
 
+  // Зростаючий чанк має сенс лише там, де чанк взагалі багатоканний.
+  const { prefs } = useDrillPrefs()
+  const growingActive = computed(
+    () => prefs.value.growing && !isSingleKanaFormat.value && !isWordMode.value,
+  )
+
   // --- Source axis -----------------------------------------------------------
   const { sets: kanaSets, effectiveKana } = useDrillSource(drillMode)
 
@@ -83,6 +92,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   const {
     total,
     index,
+    doneKana,
+    growSize,
+    answeredCount,
     currentChunk,
     expectedKana,
     expectedRomaji,
@@ -96,7 +108,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     next,
     retry,
     reset,
-  } = useKanaDrill(sourceRef, effectiveChunkSize)
+  } = useKanaDrill(sourceRef, effectiveChunkSize, growingActive)
 
   const isSingleKana = computed(() => currentChunk.value.length === 1)
 
@@ -127,10 +139,34 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const dailyProgress = useDailyProgress()
   const toasts = useToasts()
+  const { record: recordBest } = useBestScores()
+
+  // Streak of correct answers within the session. Burning a built-up combo is
+  // the dramatic moment, so the loss gets a toast and a UI burst signal.
+  const combo = ref(0)
+  const sessionBestCombo = ref(0)
+  const comboBurst = ref(0) // bumped when a combo ≥5 burns; KanaDrill animates on it
+  const trackCombo = (outcome: DrillOutcome) => {
+    if (outcome === 'correct') {
+      combo.value += 1
+      if (combo.value > sessionBestCombo.value) sessionBestCombo.value = combo.value
+      return
+    }
+    if (combo.value >= 5) {
+      toasts.push({ icon: '💔', title: `Комбо ×${combo.value} згоріло`, text: 'Серія обнулилась. Починай спочатку.' })
+      comboBurst.value += 1
+    }
+    recordBest('drill:combo', sessionBestCombo.value)
+    combo.value = 0
+  }
 
   // Auto-advance after a correct answer (same 800ms beat across formats). Every
   // answered card counts toward the daily goal; crossing it celebrates once.
   const handleOutcome = (outcome: DrillOutcome) => {
+    trackCombo(outcome)
+    if (outcome === 'correct' && growingActive.value) {
+      recordBest('drill:grow', currentChunk.value.length)
+    }
     if (dailyProgress.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
     }
@@ -141,8 +177,61 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     }, 800)
   }
 
+  // --- Per-card timer (recognition/dictation only) ----------------------------
+  // The countdown lives in the deck so both text-input formats share one source
+  // of truth; the card components only render the melting bar.
+  const timerEnabled = computed(
+    () =>
+      prefs.value.timer !== 'off' &&
+      (format.value === 'recognition' || format.value === 'dictation'),
+  )
+  // Multi-kana chunks get a proportionally bigger budget: 3 s for a 6-kana
+  // dictation chunk would be physically impossible.
+  const timerDurationMs = computed(() =>
+    timerEnabled.value
+      ? Number(prefs.value.timer) * 1000 * Math.max(1, currentChunk.value.length)
+      : 0,
+  )
+  const timerGeneration = ref(0)
+  let timerHandle: number | null = null
+  const cancelTimer = () => {
+    if (timerHandle !== null) {
+      window.clearTimeout(timerHandle)
+      timerHandle = null
+    }
+  }
+  const timeoutCard = () => {
+    timerHandle = null
+    if (lastOutcome.value || isFinished.value) return
+    submitOutcome('wrong', '⏱')
+    recordStat('wrong', '')
+    handleOutcome('wrong')
+  }
+  const armTimer = () => {
+    cancelTimer()
+    if (!timerEnabled.value || isFinished.value || total.value === 0) return
+    timerGeneration.value += 1
+    timerHandle = window.setTimeout(timeoutCard, timerDurationMs.value)
+  }
+  // An answered card awaiting the 800 ms auto-advance must never time out.
+  watch(lastOutcome, (outcome) => {
+    if (outcome) cancelTimer()
+  })
+  if (getCurrentInstance()) onBeforeUnmount(cancelTimer)
+
+  // --- Hesitation («Шість секунд ганьби») -------------------------------------
+  // Час від показу картки до відповіді. Понад хвилину ігноруємо (перемкнута
+  // вкладка — не ганьба); таймаути сюди не потрапляють — їх убив таймер.
+  let cardShownAt = Date.now()
+  const HESITATION_IGNORE_MS = 60_000
+  const noteHesitation = () => {
+    const ms = Date.now() - cardShownAt
+    if (ms < HESITATION_IGNORE_MS) recordBest('drill:hesitation', ms)
+  }
+
   // --- Answer entry points (one per input modality) --------------------------
   const answerRomaji = (romaji: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitRomaji(romaji)
     recordStat(outcome, romajiToKana(romaji))
     handleOutcome(outcome)
@@ -150,6 +239,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   }
 
   const answerVoice = (spokenText: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitKana(spokenText)
     const firstKana = [...spokenText].filter(isKana)[0] ?? ''
     recordStat(outcome, firstKana)
@@ -159,6 +249,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   // A single tapped kana (choice format).
   const answerKana = (chosenKana: string): DrillOutcome => {
+    noteHesitation()
     const outcome = submitKana(chosenKana)
     recordStat(outcome, chosenKana)
     handleOutcome(outcome)
@@ -168,6 +259,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // Self/auto-assessed outcome (writing format: correctness comes from how well
   // the trace covers the glyph, not from text matching). No confusion partner.
   const answerWritten = (correct: boolean): DrillOutcome => {
+    noteHesitation()
     const outcome: DrillOutcome = correct ? 'correct' : 'wrong'
     submitOutcome(outcome, expectedKana.value)
     recordStat(outcome, '')
@@ -184,6 +276,8 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     reset()
     sessionPairs.value = []
     lastConfused.value = ''
+    combo.value = 0
+    sessionBestCombo.value = 0
     sessionToken.value += 1
   }
   const restart = () => resetSession()
@@ -192,10 +286,23 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     for (let i = 0; i < count && !isFinished.value; i += 1) next()
   }
 
-  watch([chunkSize, drillMode, format], resetSession)
+  watch([chunkSize, drillMode, format, growingActive], resetSession)
   watch(index, () => {
     lastConfused.value = ''
   })
+
+  // Кожна нова картка (і перемикання налаштування) переззброює таймер.
+  watch([index, sessionToken, timerEnabled], armTimer, { immediate: true })
+  watch([index, sessionToken], () => {
+    cardShownAt = Date.now()
+  })
+
+  // «Спробувати ще» дає свіжий відлік — інакше друга спроба була б миттєвою
+  // поразкою з уже спаленим бюджетом часу.
+  const retryWithTimer = () => {
+    retry()
+    armTimer()
+  }
 
   // Remember which formats have been tried (feeds the «all formats» achievement).
   const { mark: markFormatSeen } = useFormatsSeen()
@@ -203,14 +310,23 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   watch(format, (value) => track('drill-format-change', { format: value }))
 
   // --- Summary ---------------------------------------------------------------
-  const wrongCount = computed(() => Math.max(0, total.value - correctCount.value))
+  // У зростаючому режимі кількість карток наперед невідома (залежить від
+  // довжин шматків) — знаменник точності тоді беремо з відповіданих карток.
+  const cardsDenominator = computed(() =>
+    growingActive.value ? answeredCount.value : total.value,
+  )
+  const wrongCount = computed(() => Math.max(0, cardsDenominator.value - correctCount.value))
   const accuracy = computed(() =>
-    total.value === 0 ? 0 : Math.round((correctCount.value / total.value) * 100),
+    cardsDenominator.value === 0
+      ? 0
+      : Math.round((correctCount.value / cardsDenominator.value) * 100),
   )
   const headline = computed(() => encouragement(accuracy.value))
 
   // Деку кінець — фіксуємо, як саме тренувались і з яким результатом.
+  const { grantFreeze } = useStreak()
   watch(isFinished, (finished) => {
+    if (finished) recordBest('drill:combo', sessionBestCombo.value)
     if (finished && total.value > 0) {
       track('drill-finish', {
         format: format.value,
@@ -218,6 +334,14 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
         cards: total.value,
         accuracy: accuracy.value,
       })
+      // Бездоганна сесія від 10 карток заробляє заморозку стріку (до капу).
+      if (accuracy.value === 100 && cardsDenominator.value >= 10 && grantFreeze()) {
+        toasts.push({
+          icon: '🧊',
+          title: '+1 заморозка стріку',
+          text: 'За бездоганну сесію. Вона врятує стрік, якщо пропустиш день.',
+        })
+      }
     }
   })
 
@@ -266,6 +390,9 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     // navigation
     total,
     index,
+    doneKana,
+    growSize,
+    growingActive,
     currentChunk,
     expectedKana,
     expectedRomaji,
@@ -280,13 +407,20 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     answerVoice,
     answerKana,
     answerWritten,
-    retry,
+    retry: retryWithTimer,
     skip,
     restart,
     sessionToken,
+    // timer
+    timerEnabled,
+    timerDurationMs,
+    timerGeneration,
     // stats / cues
     stats,
     lastConfused,
+    combo,
+    sessionBestCombo,
+    comboBurst,
     // summary
     wrongCount,
     accuracy,

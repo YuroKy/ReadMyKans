@@ -21,6 +21,13 @@ import MemoryGame from './components/MemoryGame.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
 import { useTheme } from './composables/useTheme'
 import { useStreak } from './composables/useStreak'
+import { useGameLock } from './composables/useGameLock'
+import { useExamHistory } from './composables/useExamHistory'
+import { isoWeek, attemptedThisWeek } from './utils/exam'
+import DebtRansomPanel from './components/DebtRansomPanel.vue'
+import ExamSession from './components/ExamSession.vue'
+import AchievementsPage from './components/AchievementsPage.vue'
+import AchievementIcon from './components/AchievementIcon.vue'
 import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
@@ -56,7 +63,9 @@ const latestResult = ref<SessionResult | null>(null)
 const { history, addSession, clearHistory } = useSessionHistory()
 
 const { theme, toggleTheme } = useTheme()
-const { state: streak, recordActivity } = useStreak()
+const { state: streak, recordActivity, grantFreeze } = useStreak()
+// Драматизуємо межі стріку: згорів — траур, врятований заморозкою — полегшення.
+const streakBurstKey = ref(0)
 const {
   count: dailyCount,
   goal: dailyGoal,
@@ -66,6 +75,9 @@ const {
 const { sync: syncAchievementsStore } = useAchievements()
 const { build: buildSnapshot } = useProgressSnapshot()
 const { toasts, push: pushToast, dismiss: dismissToast } = useToasts()
+const { locked: gamesAreLocked, debtCount, ransomInProgress } = useGameLock()
+const { records: examRecords } = useExamHistory()
+const examTakenThisWeek = computed(() => attemptedThisWeek(examRecords.value, isoWeek()))
 const { canInstall, promptInstall } = usePwaInstall()
 const { needRefresh, refresh } = usePwaUpdate()
 
@@ -73,6 +85,10 @@ const { needRefresh, refresh } = usePwaUpdate()
 useHashRoute(view, (target) => {
   if (target === 'result' && !latestResult.value) return 'setup'
   if ((target === 'reading' || target === 'drill') && !sourceText.value.trim()) return 'setup'
+  // Борг SRS замикає міні-ігри і через диплінки теж.
+  if ((target === 'sprint' || target === 'memory') && gamesAreLocked.value) return 'setup'
+  // Екзамен — одна спроба на тиждень, диплінком теж не обійдеш.
+  if (target === 'exam' && examTakenThisWeek.value) return 'setup'
   return target
 })
 
@@ -90,6 +106,7 @@ const syncAchievements = () => {
       track('achievement-unlock', { achievement: id })
       pushToast({
         icon: achievement.icon,
+        achievementId: id,
         title: `Досягнення: ${achievement.title}`,
         text: achievement.description,
       })
@@ -98,7 +115,21 @@ const syncAchievements = () => {
 }
 
 onMounted(() => {
-  recordActivity()
+  const advance = recordActivity()
+  if (advance.event === 'burned' && advance.lost >= 2) {
+    streakBurstKey.value += 1
+    pushToast({
+      icon: '💔',
+      title: `Стрік згорів: −${advance.lost} ${streakWord(advance.lost)}`,
+      text: 'Усе спочатку. Заморозки заробляються бездоганними сесіями.',
+    })
+  } else if (advance.event === 'frozen') {
+    pushToast({
+      icon: '🧊',
+      title: 'Заморозку витрачено',
+      text: `Стрік урятовано: ${advance.state.streak} ${streakWord(advance.state.streak)} живе далі.`,
+    })
+  }
   syncAchievements()
 })
 
@@ -136,14 +167,42 @@ const startDrill = () => {
   view.value = 'drill'
 }
 
+const lockedGameToast = () =>
+  pushToast({
+    icon: '🔒',
+    title: 'Спершу сплати борг повторень',
+    text: `Прострочено ${debtCount.value} кан. Відкуп — на головному екрані.`,
+  })
+
 const startSprint = () => {
+  if (gamesAreLocked.value) {
+    lockedGameToast()
+    return
+  }
   setupError.value = ''
   view.value = 'sprint'
 }
 
 const startMemory = () => {
+  if (gamesAreLocked.value) {
+    lockedGameToast()
+    return
+  }
   setupError.value = ''
   view.value = 'memory'
+}
+
+const startExam = () => {
+  if (examTakenThisWeek.value) {
+    pushToast({
+      icon: '🗓',
+      title: 'Екзамен уже складався цього тижня',
+      text: 'Одна спроба на тиждень. Побачимось у понеділок.',
+    })
+    return
+  }
+  setupError.value = ''
+  view.value = 'exam'
 }
 
 const handleLibrarySelect = (entry: LibraryText) => {
@@ -172,6 +231,14 @@ const handleSessionFinished = (result: SessionResult) => {
   })
   // A finished reading session is worth a few cards toward today's goal.
   if (dailyAdd(3)) pushToast(GOAL_TOAST)
+  // Бездоганне читання теж заробляє заморозку стріку.
+  if (result.accuracy >= 100 && grantFreeze()) {
+    pushToast({
+      icon: '🧊',
+      title: '+1 заморозка стріку',
+      text: 'За бездоганне читання. Врятує стрік, якщо пропустиш день.',
+    })
+  }
   syncAchievements()
   view.value = 'result'
 }
@@ -212,10 +279,19 @@ const newSession = () => {
       <div class="topbar-actions">
         <span
           v-if="streak.streak > 0"
+          :key="streakBurstKey"
           class="streak-badge"
+          :class="{ mourning: streakBurstKey > 0 }"
           :title="`Сьогодні активностей: ${streak.todayCount}`"
         >
           🔥 {{ streak.streak }} {{ streakWord(streak.streak) }}
+        </span>
+        <span
+          v-if="streak.freezes > 0"
+          class="streak-badge freeze-badge"
+          :title="'Заморозки рятують стрік від пропущеного дня'"
+        >
+          🧊 ×{{ streak.freezes }}
         </span>
         <span
           class="daily-badge"
@@ -258,10 +334,37 @@ const newSession = () => {
         <div class="intro-actions">
           <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
           <button class="primary-button" type="button" @click="startReading">Почати читання</button>
-          <button class="ghost-button" type="button" @click="startSprint">⏱️ Спідран</button>
-          <button class="ghost-button" type="button" @click="startMemory">🎴 Пари</button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': gamesAreLocked }"
+            type="button"
+            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
+            @click="startSprint"
+          >
+            {{ gamesAreLocked ? '🔒' : '⏱️' }} Спідран
+          </button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': gamesAreLocked }"
+            type="button"
+            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
+            @click="startMemory"
+          >
+            {{ gamesAreLocked ? '🔒' : '🎴' }} Пари
+          </button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': examTakenThisWeek }"
+            type="button"
+            :title="examTakenThisWeek ? 'Уже складався цього тижня' : '50 кан, без підказок, одна спроба на тиждень'"
+            @click="startExam"
+          >
+            🎓 Екзамен
+          </button>
         </div>
       </section>
+
+      <DebtRansomPanel v-if="gamesAreLocked || ransomInProgress" />
 
       <div class="setup-grid">
         <div class="main-column">
@@ -278,7 +381,7 @@ const newSession = () => {
           <KanaStatsPanel :analysis="kanaAnalysis" />
           <DailyGoalPanel />
           <KanaMasteryPanel />
-          <AchievementsPanel />
+          <AchievementsPanel @open="view = 'achievements'" />
           <ActivityCalendar />
           <KanaReferenceTable />
           <AccuracyTrend :history="history" />
@@ -300,6 +403,10 @@ const newSession = () => {
     <SprintSession v-else-if="view === 'sprint'" @exit="editText" @finish="syncAchievements" />
 
     <MemoryGame v-else-if="view === 'memory'" @exit="editText" />
+
+    <ExamSession v-else-if="view === 'exam'" @exit="editText" @finish="syncAchievements" />
+
+    <AchievementsPage v-else-if="view === 'achievements'" @exit="editText" />
 
     <ResultReview
       v-else-if="latestResult"
@@ -324,7 +431,14 @@ const newSession = () => {
 
     <div class="toast-stack" aria-live="polite">
       <div v-for="t in toasts" :key="t.id" class="app-toast" role="status">
-        <span class="app-toast-icon" aria-hidden="true">{{ t.icon }}</span>
+        <AchievementIcon
+          v-if="t.achievementId"
+          :id="t.achievementId"
+          :icon="t.icon"
+          :unlocked="true"
+          :size="36"
+        />
+        <span v-else class="app-toast-icon" aria-hidden="true">{{ t.icon }}</span>
         <div class="app-toast-body">
           <strong>{{ t.title }}</strong>
           <span v-if="t.text">{{ t.text }}</span>

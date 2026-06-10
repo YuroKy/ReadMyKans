@@ -2,6 +2,15 @@
 
 export const SPRINT_DURATION = 60 // seconds
 
+// 'classic' — 60 s time attack; 'suddendeath' — no timer, one mistake ends the
+// run, so score equals the length of the correct streak.
+export type SprintMode = 'classic' | 'suddendeath'
+
+// Personal bests for the two modes live under separate keys so a long
+// sudden-death streak can't masquerade as a time-attack score.
+export const bestKeyFor = (mode: SprintMode): string =>
+  mode === 'suddendeath' ? 'sprint:suddendeath' : 'sprint:overall'
+
 // Pick the next target from the pool, avoiding an immediate repeat when possible
 // so the same kana never shows twice in a row.
 export const pickTarget = (

@@ -9,8 +9,12 @@ const KEYS = [
   'kana-achievements',
   'kana-formats-seen',
   'kana-drill-format',
+  'kana-drill-prefs',
   'kana-activity',
   'kana-reading-progress',
+  'kana-reading-hide',
+  'kana-ransom',
+  'kana-exam',
 ]
 
 export interface ExportBundle {

@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
 import { kanaContrast } from '../utils/kanaContrast'
 import { buildChoices } from '../utils/drillDistractors'
+import { clusterFor } from '../utils/minimalPairs'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 
@@ -15,6 +16,7 @@ const {
   index,
   sessionToken,
   stats,
+  drillMode,
   answerKana,
   retry,
   skip,
@@ -30,6 +32,9 @@ const buildTiles = () => {
     return
   }
   const confusions = Object.keys(stats.statFor(target).confusedWith)
+  // «Кат» подає дистрактори з кластера мінімальних пар цієї ж кани — щоб
+  // відповідь не вгадувалась за «несхожістю» плиток.
+  if (drillMode.value === 'executioner') confusions.push(...clusterFor(target))
   choices.value = buildChoices(target, { confusions, count: 3 })
 }
 

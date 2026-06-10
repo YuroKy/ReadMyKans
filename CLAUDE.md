@@ -104,10 +104,23 @@ ReadMyKans/
 
 ### Гейміфікація
 - **Денна ціль** (`useDailyProgress`, ключ `kana-daily`): лічильник реальних відповідей за день + ціль. `add(n)` повертає `true`, коли щойно перетнули ціль (один тост). Незалежна від стріку. Хук — `useDrillDeck.handleOutcome` + `App.handleSessionFinished` + ігри.
-- **Ачивки** (`utils/achievements.ts` — каталог + `evaluate(snapshot)`; `useAchievements.sync()` — diff проти `kana-achievements`). `useProgressSnapshot.build()` збирає снапшот зі stores. `App.syncAchievements()` кличеться на межах сесій/ігор/mount і тостить нові.
-- **Спідран** (view `sprint`, `useSprint` + `utils/sprint.ts`): 60 с, нескінченна випадкова подача, рахунок=правильні, рекорд у `useBestScores` (`sprint:overall`).
+- **Ачивки** (`utils/achievements.ts` — каталог + `evaluate(snapshot)`; `useAchievements.sync()` — diff проти `kana-achievements`). `useProgressSnapshot.build()` збирає снапшот зі stores. `App.syncAchievements()` кличеться на межах сесій/ігор/mount і тостить нові. Повний каталог — сторінка `#/achievements` (`AchievementsPage.vue`, прогрес через опційне `progress?(s)`); на setup — лише тизер. Іконки — SVG-медальйони `AchievementIcon.vue` (гліфи за id, emoji-фолбек для нових; `Toast.achievementId` рендерить медальйон у тості). Анти-ачивки з `shame: true` («Зала ганьби», попелястий варіант) живляться `maxConfusionCount` і `longestHesitationMs` (max-вагання пише deck у `drill:hesitation`, ігноруючи 60с+ і таймаути).
+- **Спідран** (view `sprint`, `useSprint` + `utils/sprint.ts`): 60 с, нескінченна випадкова подача, рахунок=правильні, рекорд у `useBestScores` (`sprint:overall`). Режим **«раптова смерть»** (`SprintMode`): без таймера, перша помилка завершує ран, окремий ключ `sprint:suddendeath` (НЕ рахується в `bestSprint` снапшота — `bestSuddenDeath` окремо).
 - **Пари** (view `memory`, `utils/memoryGame.ts` + `MemoryGame.vue`): хіра↔ката / кана↔ромадзі, рекорд за ходами (`recordLow`).
 - **Тости** — спільний `useToasts` (singleton-черга), хост у `App.vue`. Усі нові ключі localStorage додані в `useDataTransfer.KEYS`.
+
+### Хардкор-режими
+- **`useDrillPrefs`** (ключ `kana-drill-prefs`) — один обʼєкт усіх тумблерів дрила: `timer` ('off'|'5'|'3'), `writingBlind`, `dictationHardcore`, `dictationRate`, `growing`.
+- **Таймер на картку** (recognition/dictation): логіка в `useDrillDeck` (`armTimer`/`timeoutCard`), бюджет × довжина чанка, скасування щойно `lastOutcome` ≠ null (гард проти 800мс авто-переходу), таймаут іде звичайним wrong-шляхом (`⏱`). UI — `DrillTimerBar.vue` (CSS-анімація, рестарт через `:key=generation`).
+- **Комбо** в дрилі: `combo`/`comboBurst` у deck; згоряння ≥5 — тост + shake; рекорд `drill:combo` → ачивка `combo-20`.
+- **Blind-письмо**: `writingBlind` у `DrillWritingCard` — TTS-промпт, полотно без контуру, мʼякші пороги `passesTrace(0.5/0.5)`; без TTS — фолбек на ромадзі-промпт.
+- **Хардкор-диктант**: 1 прослуховування (автоплей і є воно), без «Показати кану», `tryAgain` без переграшу, опційний rate ×1.25.
+- **Зростаючий чанк**: `takeChunk(words, offset, size)` у chunking.ts; `useKanaDrill(growing)` веде `doneKana`/`growSize` (correct → +1, помилка/пропуск → 1); точність деки в цьому режимі — від `answeredCount`, не `total`. Рекорд `drill:grow`.
+- **Джерело «Кат»** (`executioner` у `useDrillSource`): плутанини + кластери `utils/minimalPairs.ts` (`clusterFor`); холодний фолбек — усі кани кластерів; у choice дистрактори з того ж кластера.
+- **Зникаючий текст читання** (`utils/readingFocus.ts`, ключ `kana-reading-hide`): `fade` блюрить прочитане, `flash` показує 8-канне вікно на 2 с і маскує (тікер `now` реюзається). Пунктуація завжди видима.
+- **Стрік зі ставкою** (`useStreak`): `advanceStreak` повертає `{ state, event, lost }` (extended/frozen/burned); заморозки (cap 2) заробляються бездоганною сесією (дрил ≥10 карток / читання 100%) і гасять пропущені дні; burned — траурний тост + shake бейджа.
+- **SRS-борг** (`utils/debt.ts` + `useGameLock`, ключ `kana-ransom`): борг = лише **прострочені заплановані** картки (`overdueKana`, НЕ `dueKana` — інакше новачок залочений). ≥20 — спринт/пари замкнено (кнопки + диплінк-veto в resolve). Відкуп — `DebtRansomPanel` (міні-дрил 10 кан на `useKanaDrill` напряму, БЕЗ useDrillDeck), 10/10 → розлок до кінця дня; `ransomInProgress` тримає панель змонтованою, поки борг гаситься відповідями.
+- **Тижневий екзамен** (view `exam`, `utils/exam.ts` + `ExamSession.vue` + `useExamHistory` `kana-exam`): 50 SRS-зважених білетів recognition/dictation/choice впереміш, без підказок/пропусків, 1 спроба на ISO-тиждень (`isoWeek`, veto диплінка), поріг 90%, спарклайн історії на trend.ts. НЕ на useDrillDeck (persisted-формат + вшиті retry/skip).
 
 ### Аналітика
 - **Хітмапа активності** (`useActivityLog` — `kana-activity` date→count, бампиться з `useDailyProgress.add`; `utils/calendar.ts` — `buildCalendar` сітка тижнів; `ActivityCalendar.vue`).

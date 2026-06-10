@@ -36,14 +36,22 @@ export const useProgressSnapshot = () => {
   const build = (): ProgressSnapshot => {
     let totalAnswered = 0
     let totalCorrect = 0
+    let maxConfusionCount = 0
     for (const stat of Object.values(stats.value)) {
       totalAnswered += stat.correct + stat.wrong
       totalCorrect += stat.correct
+      for (const count of Object.values(stat.confusedWith)) {
+        if (count > maxConfusionCount) maxConfusionCount = count
+      }
     }
 
+    // Sudden-death streaks live under their own key and must not count toward
+    // the time-attack achievement — an untimed streak is a different sport.
     let bestSprint = 0
     for (const [key, value] of Object.entries(scores.value)) {
-      if (key.startsWith('sprint:')) bestSprint = Math.max(bestSprint, value)
+      if (key.startsWith('sprint:') && key !== 'sprint:suddendeath') {
+        bestSprint = Math.max(bestSprint, value)
+      }
     }
 
     return {
@@ -54,7 +62,11 @@ export const useProgressSnapshot = () => {
       hiraganaMasteredPct: masterySummary(stats.value, HIRA).masteredPct,
       katakanaMasteredPct: masterySummary(stats.value, KATA).masteredPct,
       bestSprint,
+      bestSuddenDeath: scores.value['sprint:suddendeath'] ?? 0,
+      bestDrillCombo: scores.value['drill:combo'] ?? 0,
       formatsSeen: seen.value,
+      maxConfusionCount,
+      longestHesitationMs: scores.value['drill:hesitation'] ?? 0,
     }
   }
 

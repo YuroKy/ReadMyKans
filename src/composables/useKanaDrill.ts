@@ -1,12 +1,16 @@
 import { computed, ref, type Ref } from 'vue'
 import { isKana } from '../utils/kana'
 import { toReadingHiragana, readingReady } from '../utils/reading'
-import { chunkKanaByWords, checkKanaAnswer, checkRomajiAnswer } from '../utils/chunking'
+import { chunkKanaByWords, takeChunk, checkKanaAnswer, checkRomajiAnswer } from '../utils/chunking'
 import { kanaToRomaji } from '../utils/romaji'
 
 export type DrillOutcome = 'correct' | 'wrong'
 
-export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) => {
+export const useKanaDrill = (
+  sourceText: Ref<string>,
+  chunkSize: Ref<number>,
+  growing?: Ref<boolean>,
+) => {
   // Split the source into words (by whitespace, incl. the full-width spaces the
   // texts use) and read each one, so chunks never cross a word boundary.
   const words = computed(() => {
@@ -17,8 +21,18 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
       .filter((word) => word.length > 0)
   })
 
-  const chunks = computed(() => chunkKanaByWords(words.value, chunkSize.value))
-  const total = computed(() => chunks.value.length)
+  // «Зростаючий чанк»: розмір шматка живе у growSize (росте після правильної
+  // відповіді, скидається до 1 після помилки/пропуску), а позиція — наскрізний
+  // offset у канах. Статичне нарізання тут непридатне, бо розмір змінний.
+  const isGrowing = computed(() => growing?.value ?? false)
+  const totalKana = computed(() => words.value.reduce((sum, word) => sum + word.length, 0))
+  const doneKana = ref(0)
+  const growSize = ref(1)
+
+  const chunks = computed(() =>
+    isGrowing.value ? [] : chunkKanaByWords(words.value, chunkSize.value),
+  )
+  const total = computed(() => (isGrowing.value ? totalKana.value : chunks.value.length))
 
   const index = ref(0)
   const outcomes = ref<Array<DrillOutcome | null>>([])
@@ -26,11 +40,22 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
   const lastOutcome = ref<DrillOutcome | null>(null)
   const lastAnswer = ref('')
 
-  const currentChunk = computed(() => chunks.value[index.value] ?? [])
+  const currentChunk = computed(() =>
+    isGrowing.value
+      ? takeChunk(words.value, doneKana.value, growSize.value)
+      : (chunks.value[index.value] ?? []),
+  )
   const expectedKana = computed(() => currentChunk.value.join(''))
   const expectedRomaji = computed(() => currentChunk.value.map(kanaToRomaji).join(''))
-  const isFinished = computed(() => total.value > 0 && index.value >= total.value)
+  const isFinished = computed(() =>
+    isGrowing.value
+      ? totalKana.value > 0 && doneKana.value >= totalKana.value
+      : total.value > 0 && index.value >= total.value,
+  )
   const correctCount = computed(() => outcomes.value.filter((o) => o === 'correct').length)
+  const answeredCount = computed(
+    () => outcomes.value.filter((o) => o === 'correct' || o === 'wrong').length,
+  )
 
   const record = (outcome: DrillOutcome, answer: string) => {
     outcomes.value[index.value] = outcome
@@ -65,6 +90,16 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
   const next = () => {
     lastOutcome.value = null
     lastAnswer.value = ''
+    if (isGrowing.value) {
+      const len = currentChunk.value.length
+      const outcome = outcomes.value[index.value]
+      doneKana.value += Math.max(1, len)
+      // Розмір наступного шматка визначає щойно завершена картка: пропуск
+      // (без outcome) теж скидає серію — рости можна лише відповідаючи.
+      growSize.value = outcome === 'correct' ? growSize.value + 1 : 1
+      index.value += 1
+      return
+    }
     if (index.value < total.value) index.value += 1
   }
 
@@ -78,12 +113,17 @@ export const useKanaDrill = (sourceText: Ref<string>, chunkSize: Ref<number>) =>
     outcomes.value = []
     lastOutcome.value = null
     lastAnswer.value = ''
+    doneKana.value = 0
+    growSize.value = 1
   }
 
   return {
     chunks,
     total,
     index,
+    doneKana,
+    growSize,
+    answeredCount,
     currentChunk,
     expectedKana,
     expectedRomaji,

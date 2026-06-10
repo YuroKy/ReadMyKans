@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
+import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
+import { useBestScores } from '../composables/useBestScores'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
 import DrillDictationCard from './DrillDictationCard.vue'
@@ -35,14 +37,40 @@ const {
   donutGradient,
   drillConfusions,
   weakSummary,
+  combo,
+  comboBurst,
+  doneKana,
+  growSize,
+  growingActive,
   restart,
 } = deck
+
+const { best } = useBestScores()
+
+// Короткий сплеск анімації, коли комбо згоріло.
+const comboShake = ref(false)
+watch(comboBurst, () => {
+  comboShake.value = false
+  requestAnimationFrame(() => {
+    comboShake.value = true
+    window.setTimeout(() => {
+      comboShake.value = false
+    }, 600)
+  })
+})
 
 const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'recognition', label: 'Розпізнавання', hint: 'Бачиш кану → називаєш звук' },
   { id: 'dictation', label: 'Диктант', hint: 'Чуєш звук → пишеш кану' },
   { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
   { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
+]
+
+const { prefs } = useDrillPrefs()
+const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
+  { id: 'off', label: 'Без часу' },
+  { id: '5', label: '5 с' },
+  { id: '3', label: '3 с' },
 ]
 </script>
 
@@ -78,13 +106,84 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
             <option value="srs">Повторення на сьогодні</option>
             <option value="weak">Слабкі кани</option>
             <option value="confusions">Мої плутанини</option>
+            <option value="executioner">🪓 Кат (мінімальні пари)</option>
             <option value="vocab">Словник N5</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
             </optgroup>
           </select>
         </label>
-        <label v-if="!isSingleKanaFormat && !isWordMode" class="drill-size">
+        <div
+          v-if="format === 'recognition' || format === 'dictation'"
+          class="drill-format"
+          role="group"
+          aria-label="Таймер на картку"
+        >
+          <span class="eyebrow">Таймер</span>
+          <div class="drill-format-toggle">
+            <button
+              v-for="t in TIMER_OPTIONS"
+              :key="t.id"
+              type="button"
+              :class="{ active: prefs.timer === t.id }"
+              @click="prefs.timer = t.id"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+        </div>
+        <div v-if="format === 'dictation'" class="drill-format" role="group" aria-label="Складність диктанту">
+          <span class="eyebrow">Хардкор</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: !prefs.dictationHardcore }"
+              title="Скільки завгодно прослуховувань і підказка"
+              @click="prefs.dictationHardcore = false"
+            >
+              Звичайний
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.dictationHardcore }"
+              title="Одне прослуховування, без підказки"
+              @click="prefs.dictationHardcore = true"
+            >
+              💀 1 раз
+            </button>
+            <button
+              v-if="prefs.dictationHardcore"
+              type="button"
+              :class="{ active: prefs.dictationRate === 1.25 }"
+              title="Пришвидшена вимова"
+              @click="prefs.dictationRate = prefs.dictationRate === 1.25 ? 1 : 1.25"
+            >
+              ⏩ ×1.25
+            </button>
+          </div>
+        </div>
+        <div v-if="!isSingleKanaFormat && !isWordMode" class="drill-format" role="group" aria-label="Режим шматка">
+          <span class="eyebrow">Шматок</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: !prefs.growing }"
+              title="Фіксований розмір шматка"
+              @click="prefs.growing = false"
+            >
+              Фіксований
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.growing }"
+              title="Росте на 1 кану після правильної відповіді, помилка скидає до 1"
+              @click="prefs.growing = true"
+            >
+              📈 Росте
+            </button>
+          </div>
+        </div>
+        <label v-if="!isSingleKanaFormat && !isWordMode && !growingActive" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input
             v-model.number="chunkSize"
@@ -104,7 +203,14 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
     </p>
 
     <section v-if="!isFinished && !srsEmpty" class="panel drill-progress">
-      <span>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
+      <span v-if="growingActive">
+        Кана {{ Math.min(doneKana + 1, total) }} / {{ total }} · довжина <b>{{ growSize }}</b>
+        <small v-if="best('drill:grow') > 1" class="grow-record">рекорд {{ best('drill:grow') }}</small>
+      </span>
+      <span v-else>Картка {{ Math.min(index + 1, total) }} / {{ total }}</span>
+      <span class="drill-combo" :class="{ hot: combo >= 3, shake: comboShake }">
+        {{ combo >= 3 ? `🔥 ×${combo}` : combo > 0 ? `×${combo}` : '' }}
+      </span>
       <strong>{{ correctCount }} правильних</strong>
     </section>
 
@@ -276,6 +382,36 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
+}
+
+.grow-record {
+  margin-left: 6px;
+  color: var(--muted);
+}
+
+.drill-combo {
+  min-width: 3.5em;
+  text-align: center;
+  font-weight: 800;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.drill-combo.hot {
+  color: var(--primary);
+}
+
+.drill-combo.shake {
+  animation: combo-shake 0.5s ease;
+  color: var(--rose-strong);
+}
+
+@keyframes combo-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
 }
 
 .drill-mode-note {

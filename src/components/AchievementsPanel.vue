@@ -2,16 +2,21 @@
 import { computed } from 'vue'
 import { ACHIEVEMENTS } from '../utils/achievements'
 import { useAchievements } from '../composables/useAchievements'
+import AchievementIcon from './AchievementIcon.vue'
+
+// Тизер на setup-екрані: лічильник + останні розлоки; повний каталог із
+// прогресом живе на сторінці #/achievements.
+
+const emit = defineEmits<{ open: [] }>()
 
 const { unlocked, isUnlocked, unlockedCount } = useAchievements()
 const total = ACHIEVEMENTS.length
 
-const items = computed(() =>
-  ACHIEVEMENTS.map((a) => ({
-    ...a,
-    unlocked: isUnlocked(a.id),
-    date: unlocked.value[a.id],
-  })),
+// Останні три відкриті — за датою розлоку, найсвіжіші першими.
+const recent = computed(() =>
+  ACHIEVEMENTS.filter((a) => isUnlocked(a.id))
+    .sort((a, b) => (unlocked.value[b.id] ?? '').localeCompare(unlocked.value[a.id] ?? ''))
+    .slice(0, 3),
 )
 </script>
 
@@ -28,61 +33,31 @@ const items = computed(() =>
       </div>
     </div>
 
-    <ul class="ach-grid">
-      <li
-        v-for="a in items"
-        :key="a.id"
-        class="ach-item"
-        :class="{ locked: !a.unlocked }"
-        :title="a.description"
-      >
-        <span class="ach-icon">{{ a.unlocked ? a.icon : '🔒' }}</span>
-        <span class="ach-title">{{ a.title }}</span>
-      </li>
-    </ul>
+    <div v-if="recent.length" class="ach-recent">
+      <span v-for="a in recent" :key="a.id" :title="`${a.title} — ${a.description}`">
+        <AchievementIcon :id="a.id" :icon="a.icon" :unlocked="true" :size="44" />
+      </span>
+    </div>
+    <p v-else class="muted compact">Ще нічого не відкрито — все попереду.</p>
+
+    <button class="secondary-button small ach-open" type="button" @click="emit('open')">
+      Усі досягнення →
+    </button>
   </section>
 </template>
 
 <style scoped>
-.ach-grid {
+.achievements-panel {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ach-recent {
+  display: flex;
   gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.ach-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--rose);
-  border: 1px solid transparent;
-}
-
-.ach-icon {
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.ach-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.ach-item.locked {
-  background: transparent;
-  border-color: var(--divider);
-  opacity: 0.6;
-}
-
-.ach-item.locked .ach-title {
-  color: var(--muted);
-  font-weight: 600;
+.ach-open {
+  justify-self: start;
 }
 </style>

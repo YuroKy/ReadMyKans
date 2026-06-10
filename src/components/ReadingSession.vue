@@ -20,6 +20,7 @@ import {
   loadReadingProgress,
   saveReadingProgress,
 } from '../utils/readingProgress'
+import { charVisibility, FLASH_WINDOW, type HideMode } from '../utils/readingFocus'
 import { useShadowing } from '../composables/useShadowing'
 import MicrophoneStatus from './MicrophoneStatus.vue'
 import SakuraDecor from './SakuraDecor.vue'
@@ -49,6 +50,20 @@ const { compareTexts } = useTextComparison()
 
 const shadow = useShadowing(computed(() => props.sourceText))
 const furiganaMode = ref<'off' | 'furigana' | 'romaji'>('off')
+
+// «Зникаючий текст»: off / fade (прочитане блюриться) / flash (вікно тексту
+// блимає на 2 с і ховається — читаєш з памʼяті). Persisted окремим ключем.
+const HIDE_KEY = 'kana-reading-hide'
+const isHideMode = (v: unknown): v is HideMode => v === 'off' || v === 'fade' || v === 'flash'
+const loadHideMode = (): HideMode => {
+  if (typeof window === 'undefined') return 'off'
+  const stored = localStorage.getItem(HIDE_KEY)
+  return isHideMode(stored) ? stored : 'off'
+}
+const hideMode = ref<HideMode>(loadHideMode())
+watch(hideMode, (value) => {
+  if (typeof window !== 'undefined') localStorage.setItem(HIDE_KEY, value)
+})
 const rubySegments = computed(() => {
   void readingReady.value
   const mode = furiganaMode.value
@@ -134,6 +149,22 @@ const liveFeedback = computed(() => {
   }
 })
 
+// Блимання: вхід курсора в нове вікно відкриває його на 2 с (тікер `now`
+// уже оновлюється кожні 500 мс — нового інтервалу не треба).
+const flashUntil = ref(0)
+watch(
+  () => Math.floor(liveFeedback.value.currentIndex / FLASH_WINDOW),
+  () => {
+    flashUntil.value = Date.now() + 2000
+  },
+  { immediate: true },
+)
+const flashActive = computed(() => hideMode.value === 'flash' && now.value < flashUntil.value)
+const reflash = () => {
+  flashUntil.value = Date.now() + 2000
+  now.value = Date.now()
+}
+
 const acceptedTranscript = computed(() =>
   normalizedOriginalChars.value.slice(0, liveFeedback.value.correctPrefixLength).join(''),
 )
@@ -184,10 +215,24 @@ const sourceCharacters = computed(() => {
       }
     }
 
+    // Пунктуація і пробіли (без порівнюваного індексу) лишаються видимими —
+    // ховаємо тільки кану, яку можна «підглянути».
+    const visibility =
+      index !== null
+        ? charVisibility(
+            index,
+            liveFeedback.value.currentIndex,
+            hideMode.value,
+            FLASH_WINDOW,
+            flashActive.value,
+          )
+        : 'visible'
+
     return {
       char,
       key: `${visibleIndex}-${char}`,
       state,
+      visibility,
     }
   })
 })
@@ -352,6 +397,39 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="aid-block">
+          <span class="eyebrow">Зникаючий текст</span>
+          <div class="furigana-toggle">
+            <button type="button" :class="{ active: hideMode === 'off' }" @click="hideMode = 'off'">
+              Вимк.
+            </button>
+            <button
+              type="button"
+              title="Прочитане зникає — не можна перечитати"
+              :class="{ active: hideMode === 'fade' }"
+              @click="hideMode = 'fade'"
+            >
+              🫥 Зникати
+            </button>
+            <button
+              type="button"
+              title="Шматок тексту блимає на 2 с і ховається — читай з пам'яті"
+              :class="{ active: hideMode === 'flash' }"
+              @click="hideMode = 'flash'"
+            >
+              ⚡ Блимання
+            </button>
+          </div>
+          <button
+            v-if="hideMode === 'flash'"
+            class="ghost-button small"
+            type="button"
+            @click="reflash"
+          >
+            👁 Показати вікно ще раз
+          </button>
+        </div>
+
+        <div class="aid-block">
           <span class="eyebrow">Підказки читання</span>
           <div class="furigana-toggle">
             <button type="button" :class="{ active: furiganaMode === 'off' }" @click="furiganaMode = 'off'">
@@ -463,7 +541,7 @@ onBeforeUnmount(() => {
             v-for="item in sourceCharacters"
             :key="item.key"
             class="source-char"
-            :class="item.state"
+            :class="[item.state, item.visibility !== 'visible' ? `vis-${item.visibility}` : '']"
           >
             {{ item.char }}
           </span>
@@ -532,6 +610,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.source-char {
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.source-char.vis-blurred {
+  filter: blur(6px);
+  opacity: 0.35;
+}
+
+.source-char.vis-masked {
+  filter: blur(9px);
+  opacity: 0.12;
+}
+
+/* Поточну кану в режимі «зникати» видно, але помилку підсвічуємо як завжди;
+   у «блиманні» курсор теж ховається разом із вікном — це і є вправа. */
+
 .reading-aids {
   padding: 18px 22px;
   display: grid;

@@ -4,6 +4,7 @@ import { useSrsSchedule } from './useSrsSchedule'
 import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
 import { orderBySrs, reviewPriority, todayString } from '../utils/srs'
+import { clusterFor, ALL_CLUSTER_KANA } from '../utils/minimalPairs'
 
 export const DRILL_MODE_TEXT = 'text'
 
@@ -52,6 +53,24 @@ export const useDrillSource = (mode: Ref<string>) => {
         }
       }
       return order([...involved])
+    }
+
+    // «Кат»: твої плутанини + всі члени їхніх кластерів мінімальних пар.
+    // Без статистики — всі куровані кластери, щоб режим працював «з холоду».
+    if (current === 'executioner') {
+      const involved = new Set<string>()
+      for (const [kana, stat] of Object.entries(stats.value)) {
+        const partners = Object.keys(stat.confusedWith)
+        if (partners.length === 0) continue
+        involved.add(kana)
+        for (const partner of partners) involved.add(partner)
+        for (const member of clusterFor(kana)) involved.add(member)
+        for (const partner of partners) {
+          for (const member of clusterFor(partner)) involved.add(member)
+        }
+      }
+      const pool = involved.size > 0 ? [...involved] : [...ALL_CLUSTER_KANA]
+      return order(pool)
     }
 
     const set = setById.get(current)

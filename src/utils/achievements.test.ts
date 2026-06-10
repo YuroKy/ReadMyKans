@@ -10,7 +10,11 @@ const base: ProgressSnapshot = {
   hiraganaMasteredPct: 0,
   katakanaMasteredPct: 0,
   bestSprint: 0,
+  bestSuddenDeath: 0,
+  bestDrillCombo: 0,
   formatsSeen: [],
+  maxConfusionCount: 0,
+  longestHesitationMs: 0,
 }
 
 describe('achievements.evaluate', () => {
@@ -51,9 +55,34 @@ describe('achievements.evaluate', () => {
       hiraganaMasteredPct: 100,
       katakanaMasteredPct: 100,
       bestSprint: 99,
+      bestSuddenDeath: 99,
+      bestDrillCombo: 99,
       formatsSeen: ['recognition', 'dictation', 'choice', 'writing'],
+      maxConfusionCount: 99,
+      longestHesitationMs: 99_999,
     })
     assert.equal(ids.length, ACHIEVEMENTS.length)
+  })
+
+  it('пороги «Зали ганьби»', () => {
+    assert.ok(!evaluate({ ...base, maxConfusionCount: 9 }).includes('shame-again-you'))
+    assert.ok(evaluate({ ...base, maxConfusionCount: 10 }).includes('shame-again-you'))
+    assert.ok(!evaluate({ ...base, longestHesitationMs: 5999 }).includes('shame-six-seconds'))
+    assert.ok(evaluate({ ...base, longestHesitationMs: 6000 }).includes('shame-six-seconds'))
+  })
+
+  it('комбо-пороги', () => {
+    assert.ok(!evaluate({ ...base, bestDrillCombo: 19 }).includes('combo-20'))
+    assert.ok(evaluate({ ...base, bestDrillCombo: 20 }).includes('combo-20'))
+  })
+
+  it('sudden-death серія не зараховується як спідран і навпаки', () => {
+    const ids = evaluate({ ...base, bestSuddenDeath: 15 })
+    assert.ok(ids.includes('suddendeath-15'))
+    assert.ok(!ids.includes('sprint-30'))
+    const sprintIds = evaluate({ ...base, bestSprint: 30 })
+    assert.ok(sprintIds.includes('sprint-30'))
+    assert.ok(!sprintIds.includes('suddendeath-15'))
   })
 })
 

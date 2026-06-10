@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
+import { useDrillPrefs } from '../composables/useDrillPrefs'
 import {
   passesTrace,
   tolerantTraceScore,
   type Point,
 } from '../utils/strokeMatch'
+import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import StrokeOrderHint from './StrokeOrderHint.vue'
 
@@ -29,6 +31,14 @@ const GLYPH_BASELINE = SIZE / 2 + SIZE * 0.04
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const showGuide = ref(true)
 const feedback = ref('')
+
+// «З пам'яті»: чуєш кану (TTS) і пишеш на порожньому полотні — без сірого
+// контуру і без ромадзі-промпта. Якщо синтез мовлення недоступний, промпт
+// лишається текстовим, інакше режим був би непрохідним.
+const { prefs } = useDrillPrefs()
+const ttsSupported = isSpeechSynthesisSupported()
+const blind = computed(() => prefs.value.writingBlind)
+const speak = () => speakKana(expectedKana.value, { rate: 0.85 })
 
 // --- Підказка порядку рисок (KanjiVG) ---------------------------------------
 const showStrokeHint = ref(false)
@@ -117,7 +127,7 @@ const redraw = () => {
   if (!cv || !ctx) return
   ctx.clearRect(0, 0, SIZE, SIZE)
 
-  if (showGuide.value && expectedKana.value) {
+  if (showGuide.value && !blind.value && expectedKana.value) {
     ctx.save()
     ctx.fillStyle = 'rgba(120, 120, 140, 0.18)'
     ctx.textAlign = 'center'
@@ -191,7 +201,10 @@ const check = () => {
     return
   }
   const score = tolerantTraceScore(rasterGlyph(expectedKana.value), rasterStrokes(), GRID, GRID)
-  const ok = passesTrace(score, { minCovered: 0.6, maxSpill: 0.4 })
+  // Без контуру попадання в растр гліфа об'єктивно гірше — пороги м'якші.
+  const ok = blind.value
+    ? passesTrace(score, { minCovered: 0.5, maxSpill: 0.5 })
+    : passesTrace(score, { minCovered: 0.6, maxSpill: 0.4 })
   feedback.value = ''
   answerWritten(ok)
 }
@@ -208,13 +221,19 @@ watch([index, sessionToken], () => {
   showStrokeHint.value = false
   void refreshStrokeAvailability()
   redraw()
+  if (blind.value && ttsSupported) speak()
 })
 
 watch(showGuide, redraw)
+watch(blind, (on) => {
+  redraw()
+  if (on && ttsSupported) speak()
+})
 
 onMounted(() => {
   void refreshStrokeAvailability()
   redraw()
+  if (blind.value && ttsSupported) speak()
 })
 </script>
 
@@ -225,8 +244,22 @@ onMounted(() => {
   >
     <SakuraDecor />
     <div class="drill-write-prompt">
-      <span class="eyebrow">Напиши кану</span>
-      <strong class="drill-write-romaji">{{ expectedRomaji || '—' }}</strong>
+      <template v-if="blind && ttsSupported">
+        <span class="eyebrow">Послухай і напиши з пам'яті</span>
+        <button
+          class="drill-write-listen"
+          type="button"
+          title="Послухати ще раз"
+          aria-label="Послухати кану ще раз"
+          @click="speak"
+        >
+          🔊
+        </button>
+      </template>
+      <template v-else>
+        <span class="eyebrow">Напиши кану</span>
+        <strong class="drill-write-romaji">{{ expectedRomaji || '—' }}</strong>
+      </template>
     </div>
 
     <div class="drill-write-stage">
@@ -251,12 +284,21 @@ onMounted(() => {
       <button
         class="ghost-button small"
         type="button"
+        :class="{ 'drill-blind-on': blind }"
+        @click="prefs.writingBlind = !prefs.writingBlind"
+      >
+        {{ blind ? '🙈 З пам\'яті: увімк' : '🙈 З пам\'яті' }}
+      </button>
+      <button
+        v-if="!blind"
+        class="ghost-button small"
+        type="button"
         @click="showGuide = !showGuide"
       >
         {{ showGuide ? 'Сховати зразок' : 'Показати зразок' }}
       </button>
       <button
-        v-if="strokeHintAvailable"
+        v-if="strokeHintAvailable && !blind"
         class="ghost-button small"
         type="button"
         @click="showStrokeHint = !showStrokeHint"
@@ -277,7 +319,8 @@ onMounted(() => {
 
     <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
       <strong>✗ Ще не зовсім</strong>
-      <span>Обведи <b>{{ expectedKana }}</b> ({{ expectedRomaji }}) повніше — за зразком.</span>
+      <span v-if="blind">Це була <b>{{ expectedKana }}</b> ({{ expectedRomaji }}) — глянь на риски й спробуй ще.</span>
+      <span v-else>Обведи <b>{{ expectedKana }}</b> ({{ expectedRomaji }}) повніше — за зразком.</span>
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
@@ -299,6 +342,31 @@ onMounted(() => {
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--ink);
+}
+
+.drill-write-listen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--rose);
+  color: var(--primary);
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.12s ease;
+}
+
+.drill-write-listen:hover {
+  transform: translateY(-2px);
+}
+
+.drill-blind-on {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .drill-write-stage {

@@ -106,7 +106,10 @@ onMounted(buildTiles)
     </div>
 
     <div v-if="!lastOutcome" class="drill-sub-actions">
-      <button class="ghost-button small" type="button" @click="skip">Пропустити</button>
+      <button class="ghost-button small" type="button" @click="skip()">Пропустити</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skip(3)">×3</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skip(5)">×5</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skip(10)">×10</button>
     </div>
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
@@ -125,7 +128,7 @@ onMounted(buildTiles)
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
-        <button class="primary-button" type="button" @click="skip">Далі</button>
+        <button class="primary-button" type="button" @click="skip()">Далі</button>
       </div>
     </div>
   </section>

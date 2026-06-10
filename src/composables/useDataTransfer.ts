@@ -10,6 +10,7 @@ const KEYS = [
   'kana-formats-seen',
   'kana-drill-format',
   'kana-activity',
+  'kana-reading-progress',
 ]
 
 export interface ExportBundle {

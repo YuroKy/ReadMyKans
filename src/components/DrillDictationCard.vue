@@ -28,10 +28,19 @@ const ttsSupported = isSpeechSynthesisSupported()
 const play = () => speakKana(expectedKana.value, { rate: 0.85 })
 const focusInput = () => nextTick(() => inputEl.value?.focus())
 
+// Пропуск не повинен повертати фокус в інпут: на мобільному це піднімає
+// клавіатуру й заважає пропускати кілька карток поспіль.
+let focusAfterChange = true
+const skipCards = (count = 1) => {
+  focusAfterChange = false
+  skip(count)
+}
+
 const resetCard = () => {
   answer.value = ''
   revealed.value = false
-  focusInput()
+  if (focusAfterChange) focusInput()
+  focusAfterChange = true
   // Auto-play the new card so the learner hears it without an extra tap.
   play()
 }
@@ -106,7 +115,10 @@ onMounted(() => {
       <button class="ghost-button small" type="button" @click="revealed = true">
         Показати кану
       </button>
-      <button class="ghost-button small" type="button" @click="skip">Пропустити</button>
+      <button class="ghost-button small" type="button" @click="skipCards(1)">Пропустити</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skipCards(3)">×3</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skipCards(5)">×5</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skipCards(10)">×10</button>
     </div>
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
@@ -123,7 +135,7 @@ onMounted(() => {
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
-        <button class="primary-button" type="button" @click="skip">Далі</button>
+        <button class="primary-button" type="button" @click="skip()">Далі</button>
       </div>
     </div>
 

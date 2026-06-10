@@ -265,7 +265,10 @@ onMounted(() => {
       >
         {{ showStrokeHint ? 'Сховати риски' : 'Порядок рисок' }}
       </button>
-      <button class="ghost-button small" type="button" @click="skip">Пропустити</button>
+      <button class="ghost-button small" type="button" @click="skip()">Пропустити</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skip(3)">×3</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skip(5)">×5</button>
+      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skip(10)">×10</button>
       <button class="primary-button" type="button" @click="check">Перевірити</button>
     </div>
 
@@ -280,7 +283,7 @@ onMounted(() => {
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
-        <button class="primary-button" type="button" @click="skip">Далі</button>
+        <button class="primary-button" type="button" @click="skip()">Далі</button>
       </div>
     </div>
   </section>

@@ -34,12 +34,21 @@ import type { LibraryText } from './data/library'
 import { analyzeKana } from './utils/kana'
 import { track } from './utils/analytics'
 import { initReading } from './utils/reading'
+import { loadReadingProgress } from './utils/readingProgress'
+import { viewForHash } from './utils/route'
 import { DEFAULT_STORY } from './data/defaultStory'
 
 void initReading()
 
 const view = ref<AppView>('setup')
 const sourceText = ref(DEFAULT_STORY)
+
+// Перезавантаження посеред читання: відновлюємо текст незавершеної сесії,
+// щоб диплінк #/reading вижив і ReadingSession продовжила зі збереженого місця.
+const savedReading = loadReadingProgress()
+if (savedReading && viewForHash(window.location.hash) === 'reading') {
+  sourceText.value = savedReading.text
+}
 const setupError = ref('')
 const uploadError = ref('')
 const fileInfo = ref<UploadedFileInfo | null>(null)

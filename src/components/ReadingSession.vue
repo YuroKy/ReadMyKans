@@ -15,6 +15,11 @@ import {
 import { toRubySegments } from '../utils/furigana'
 import { normalizeJapaneseText } from '../utils/textNormalize'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
+import {
+  clearReadingProgress,
+  loadReadingProgress,
+  saveReadingProgress,
+} from '../utils/readingProgress'
 import { useShadowing } from '../composables/useShadowing'
 import MicrophoneStatus from './MicrophoneStatus.vue'
 import SakuraDecor from './SakuraDecor.vue'
@@ -56,6 +61,9 @@ const startedAt = ref(Date.now())
 const now = ref(Date.now())
 const timerId = window.setInterval(() => {
   now.value = Date.now()
+  // Тримаємо збережену тривалість свіжою навіть без нових збігів — щоб
+  // після зависання/перезавантаження таймер не «відмотувався» назад.
+  if (confirmedLen.value > 0 && now.value - lastPersistedAt > 5000) persistProgress()
 }, 500)
 
 const normalizedLength = computed(() => [...normalizeJapaneseText(props.sourceText)].length)
@@ -78,10 +86,26 @@ const normalizedSpokenChars = computed(() => {
 })
 
 const confirmedLen = ref(0)
+// Скільки кан було відновлено зі збереженої сесії (0 — старт з нуля).
+const resumedFrom = ref(0)
+
+let lastPersistedAt = 0
+const persistProgress = () => {
+  if (confirmedLen.value <= 0) return
+  lastPersistedAt = Date.now()
+  saveReadingProgress({
+    text: props.sourceText,
+    confirmedLen: confirmedLen.value,
+    elapsedMs: Date.now() - startedAt.value,
+    savedAt: new Date().toISOString(),
+  })
+}
 
 watch(normalizedSpokenChars, (spoken) => {
   confirmedLen.value = advanceMatch(normalizedOriginalChars.value, spoken, confirmedLen.value)
 })
+
+watch(confirmedLen, persistProgress)
 
 const liveFeedback = computed(() => {
   const original = normalizedOriginalChars.value
@@ -183,8 +207,10 @@ const speakCurrentKana = () => {
 
 const restart = () => {
   reset()
+  clearReadingProgress()
   manualTranscript.value = ''
   confirmedLen.value = 0
+  resumedFrom.value = 0
   startedAt.value = Date.now()
   now.value = Date.now()
   start()
@@ -197,6 +223,7 @@ const finishSession = () => {
     ? visibleTranscript.value.trim()
     : normalizedOriginalChars.value.slice(0, liveFeedback.value.correctPrefixLength).join('')
   finish()
+  clearReadingProgress()
   const comparison = compareTexts(props.sourceText, recognizedText)
   const result: SessionResult = {
     id: crypto.randomUUID(),
@@ -217,8 +244,16 @@ const finishSession = () => {
 
 onMounted(() => {
   void initReading()
-  confirmedLen.value = 0
-  startedAt.value = Date.now()
+  // Якщо є збережена сесія саме цього тексту — продовжуємо з того ж місця.
+  const saved = loadReadingProgress()
+  if (saved && saved.text === props.sourceText) {
+    confirmedLen.value = Math.min(saved.confirmedLen, normalizedOriginalChars.value.length)
+    resumedFrom.value = confirmedLen.value
+    startedAt.value = Date.now() - saved.elapsedMs
+  } else {
+    confirmedLen.value = 0
+    startedAt.value = Date.now()
+  }
   start()
 })
 
@@ -248,6 +283,11 @@ onBeforeUnmount(() => {
     </section>
 
     <MicrophoneStatus :status="status" :supported="isSupported" :message="errorMessage" />
+
+    <p v-if="resumedFrom > 0" class="reading-note">
+      ▶ Сесію відновлено: продовжуємо з {{ resumedFrom + 1 }}-ї кани з
+      {{ liveFeedback.total }}. Кнопка «Спочатку» скине збережений прогрес.
+    </p>
 
     <section class="panel reading-aids">
       <div class="aids-row">

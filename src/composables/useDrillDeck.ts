@@ -187,7 +187,10 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     sessionToken.value += 1
   }
   const restart = () => resetSession()
-  const skip = () => next()
+  // Пропуск кількох карток за раз (кнопки ×3/×5/×10).
+  const skip = (count = 1) => {
+    for (let i = 0; i < count && !isFinished.value; i += 1) next()
+  }
 
   watch([chunkSize, drillMode, format], resetSession)
   watch(index, () => {

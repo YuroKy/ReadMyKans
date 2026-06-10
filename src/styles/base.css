@@ -2360,6 +2360,11 @@ h3 {
   color: var(--sky-strong);
 }
 
+.game-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .theme-toggle {
   display: grid;
   place-items: center;

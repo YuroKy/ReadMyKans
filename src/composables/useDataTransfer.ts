@@ -13,6 +13,7 @@ const KEYS = [
   'kana-activity',
   'kana-reading-progress',
   'kana-reading-hide',
+  'kana-ransom',
 ]
 
 export interface ExportBundle {

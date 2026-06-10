@@ -21,6 +21,8 @@ import MemoryGame from './components/MemoryGame.vue'
 import { useSessionHistory } from './composables/useSessionHistory'
 import { useTheme } from './composables/useTheme'
 import { useStreak } from './composables/useStreak'
+import { useGameLock } from './composables/useGameLock'
+import DebtRansomPanel from './components/DebtRansomPanel.vue'
 import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
@@ -68,6 +70,7 @@ const {
 const { sync: syncAchievementsStore } = useAchievements()
 const { build: buildSnapshot } = useProgressSnapshot()
 const { toasts, push: pushToast, dismiss: dismissToast } = useToasts()
+const { locked: gamesAreLocked, debtCount, ransomInProgress } = useGameLock()
 const { canInstall, promptInstall } = usePwaInstall()
 const { needRefresh, refresh } = usePwaUpdate()
 
@@ -75,6 +78,8 @@ const { needRefresh, refresh } = usePwaUpdate()
 useHashRoute(view, (target) => {
   if (target === 'result' && !latestResult.value) return 'setup'
   if ((target === 'reading' || target === 'drill') && !sourceText.value.trim()) return 'setup'
+  // Борг SRS замикає міні-ігри і через диплінки теж.
+  if ((target === 'sprint' || target === 'memory') && gamesAreLocked.value) return 'setup'
   return target
 })
 
@@ -152,12 +157,27 @@ const startDrill = () => {
   view.value = 'drill'
 }
 
+const lockedGameToast = () =>
+  pushToast({
+    icon: '🔒',
+    title: 'Спершу сплати борг повторень',
+    text: `Прострочено ${debtCount.value} кан. Відкуп — на головному екрані.`,
+  })
+
 const startSprint = () => {
+  if (gamesAreLocked.value) {
+    lockedGameToast()
+    return
+  }
   setupError.value = ''
   view.value = 'sprint'
 }
 
 const startMemory = () => {
+  if (gamesAreLocked.value) {
+    lockedGameToast()
+    return
+  }
   setupError.value = ''
   view.value = 'memory'
 }
@@ -291,10 +311,28 @@ const newSession = () => {
         <div class="intro-actions">
           <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
           <button class="primary-button" type="button" @click="startReading">Почати читання</button>
-          <button class="ghost-button" type="button" @click="startSprint">⏱️ Спідран</button>
-          <button class="ghost-button" type="button" @click="startMemory">🎴 Пари</button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': gamesAreLocked }"
+            type="button"
+            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
+            @click="startSprint"
+          >
+            {{ gamesAreLocked ? '🔒' : '⏱️' }} Спідран
+          </button>
+          <button
+            class="ghost-button"
+            :class="{ 'game-locked': gamesAreLocked }"
+            type="button"
+            :title="gamesAreLocked ? 'Замкнено: спершу сплати борг повторень' : ''"
+            @click="startMemory"
+          >
+            {{ gamesAreLocked ? '🔒' : '🎴' }} Пари
+          </button>
         </div>
       </section>
+
+      <DebtRansomPanel v-if="gamesAreLocked || ransomInProgress" />
 
       <div class="setup-grid">
         <div class="main-column">

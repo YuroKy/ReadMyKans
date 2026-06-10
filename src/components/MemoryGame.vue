@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
 .seg {
   display: inline-flex;
   border-radius: 999px;
-  background: #fff3f6;
+  background: var(--surface-inset);
   padding: 3px;
   gap: 2px;
 }
@@ -242,7 +242,7 @@ onBeforeUnmount(() => {
 }
 
 .seg button.active {
-  background: #ffffff;
+  background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
 }
@@ -301,7 +301,7 @@ onBeforeUnmount(() => {
 }
 
 .memory-card.flipped {
-  background: #ffffff;
+  background: var(--surface-raised);
   border: 2px solid var(--primary);
 }
 

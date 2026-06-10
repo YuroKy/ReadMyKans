@@ -536,7 +536,7 @@ onBeforeUnmount(() => {
   margin-top: 4px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fff3f6;
+  background: var(--surface-inset);
 }
 
 .shadow-steps-head {
@@ -583,7 +583,7 @@ onBeforeUnmount(() => {
 .furigana-toggle {
   display: inline-flex;
   border-radius: 999px;
-  background: #fff3f6;
+  background: var(--surface-inset);
   padding: 3px;
   gap: 2px;
 }
@@ -602,7 +602,7 @@ onBeforeUnmount(() => {
 }
 
 .furigana-toggle button.active {
-  background: #ffffff;
+  background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
 }
@@ -610,7 +610,7 @@ onBeforeUnmount(() => {
 .furigana-text {
   margin: 0;
   border-radius: 18px;
-  background: #fff3f6;
+  background: var(--surface-inset);
   padding: 18px 18px 8px;
   font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
   font-size: 1.5rem;

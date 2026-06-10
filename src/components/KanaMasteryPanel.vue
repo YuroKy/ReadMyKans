@@ -96,7 +96,7 @@ const tierClass = (kana: string): string => {
 .mastery-script-toggle {
   display: inline-flex;
   border-radius: 999px;
-  background: #fff3f6;
+  background: var(--surface-inset);
   padding: 3px;
   gap: 2px;
   margin: 14px 0 4px;
@@ -116,7 +116,7 @@ const tierClass = (kana: string): string => {
 }
 
 .mastery-script-toggle button.active {
-  background: #ffffff;
+  background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
 }

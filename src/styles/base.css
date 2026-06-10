@@ -27,6 +27,8 @@
   --lavender: #a88ce8;
   --amber: #fff0d6;
   --amber-strong: #cf8a2a;
+  --surface-inset: #fff3f6;
+  --surface-raised: #ffffff;
   --grad-primary: linear-gradient(135deg, #ff7ba3, #f45f8a);
   --grad-secondary: linear-gradient(135deg, #73d8c1, #45b89c);
   --shadow: 0 18px 50px rgba(244, 95, 138, 0.12);
@@ -1369,6 +1371,7 @@ h3 {
 .drill-controls {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
@@ -2408,6 +2411,8 @@ h3 {
   --lavender: #b7a0f0;
   --amber: #3a3119;
   --amber-strong: #e0b257;
+  --surface-inset: #1c1729;
+  --surface-raised: #352e4c;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
   --shadow-pink: 0 14px 30px rgba(244, 95, 138, 0.3);
 }

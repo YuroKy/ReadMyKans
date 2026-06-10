@@ -166,7 +166,7 @@ onMounted(buildTiles)
   aspect-ratio: 1 / 1;
   border: 2px solid var(--divider);
   border-radius: 22px;
-  background: #ffffff;
+  background: var(--surface-raised);
   font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
   font-size: 2.8rem;
   font-weight: 700;

@@ -39,7 +39,7 @@ const {
 } = deck
 
 const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
-  { id: 'recognition', label: 'Впізнавання', hint: 'Бачиш кану → називаєш звук' },
+  { id: 'recognition', label: 'Розпізнавання', hint: 'Бачиш кану → називаєш звук' },
   { id: 'dictation', label: 'Диктант', hint: 'Чуєш звук → пишеш кану' },
   { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
   { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
@@ -247,8 +247,8 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
 .drill-format-toggle {
   display: inline-flex;
   flex-wrap: wrap;
-  border-radius: 999px;
-  background: #fff3f6;
+  border-radius: 18px;
+  background: var(--surface-inset);
   padding: 3px;
   gap: 2px;
 }
@@ -267,7 +267,7 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
 }
 
 .drill-format-toggle button.active {
-  background: #ffffff;
+  background: var(--surface-raised);
   color: var(--primary);
   box-shadow: var(--shadow);
 }

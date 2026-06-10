@@ -311,7 +311,7 @@ onMounted(() => {
   height: 100%;
   border: 2px dashed var(--divider);
   border-radius: 24px;
-  background: #ffffff;
+  background: var(--surface-raised);
   touch-action: none;
   cursor: crosshair;
 }

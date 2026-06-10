@@ -22,8 +22,8 @@ test('дрил: відповідь ромадзі зараховується', a
   await page.getByRole('button', { name: 'Тренувати кану' }).click()
   await expect(page).toHaveURL(/#\/drill$/)
 
-  // Формат «впізнавання» — той, де є текстовий ввід ромадзі.
-  await page.getByRole('button', { name: 'Впізнавання' }).click()
+  // Формат «розпізнавання» — той, де є текстовий ввід ромадзі.
+  await page.getByRole('button', { name: 'Розпізнавання' }).click()
   await expect(page.locator('.drill-kana')).toBeVisible()
 
   // Беремо правильну відповідь із підказки, щоб не дублювати транслітерацію.
@@ -38,7 +38,7 @@ test('дрил: відповідь ромадзі зараховується', a
 
 test('словниковий дрил показує переклад після відповіді', async ({ page }) => {
   await page.goto('/#/drill')
-  await page.getByRole('button', { name: 'Впізнавання' }).click()
+  await page.getByRole('button', { name: 'Розпізнавання' }).click()
   await page.getByLabel('Джерело').selectOption('vocab')
 
   await page.getByRole('button', { name: 'Показати підказку' }).click()

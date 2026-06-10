@@ -1,10 +1,11 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { useKanaDrill } from './useKanaDrill'
 import { useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { useDailyProgress } from './useDailyProgress'
 import { useBestScores } from './useBestScores'
+import { useDrillPrefs } from './useDrillPrefs'
 import { useFormatsSeen } from './useFormatsSeen'
 import { useToasts } from './useToasts'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
@@ -163,6 +164,49 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     }, 800)
   }
 
+  // --- Per-card timer (recognition/dictation only) ----------------------------
+  // The countdown lives in the deck so both text-input formats share one source
+  // of truth; the card components only render the melting bar.
+  const { prefs } = useDrillPrefs()
+  const timerEnabled = computed(
+    () =>
+      prefs.value.timer !== 'off' &&
+      (format.value === 'recognition' || format.value === 'dictation'),
+  )
+  // Multi-kana chunks get a proportionally bigger budget: 3 s for a 6-kana
+  // dictation chunk would be physically impossible.
+  const timerDurationMs = computed(() =>
+    timerEnabled.value
+      ? Number(prefs.value.timer) * 1000 * Math.max(1, currentChunk.value.length)
+      : 0,
+  )
+  const timerGeneration = ref(0)
+  let timerHandle: number | null = null
+  const cancelTimer = () => {
+    if (timerHandle !== null) {
+      window.clearTimeout(timerHandle)
+      timerHandle = null
+    }
+  }
+  const timeoutCard = () => {
+    timerHandle = null
+    if (lastOutcome.value || isFinished.value) return
+    submitOutcome('wrong', '⏱')
+    recordStat('wrong', '')
+    handleOutcome('wrong')
+  }
+  const armTimer = () => {
+    cancelTimer()
+    if (!timerEnabled.value || isFinished.value || total.value === 0) return
+    timerGeneration.value += 1
+    timerHandle = window.setTimeout(timeoutCard, timerDurationMs.value)
+  }
+  // An answered card awaiting the 800 ms auto-advance must never time out.
+  watch(lastOutcome, (outcome) => {
+    if (outcome) cancelTimer()
+  })
+  if (getCurrentInstance()) onBeforeUnmount(cancelTimer)
+
   // --- Answer entry points (one per input modality) --------------------------
   const answerRomaji = (romaji: string): DrillOutcome => {
     const outcome = submitRomaji(romaji)
@@ -220,6 +264,16 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   watch(index, () => {
     lastConfused.value = ''
   })
+
+  // Кожна нова картка (і перемикання налаштування) переззброює таймер.
+  watch([index, sessionToken, timerEnabled], armTimer, { immediate: true })
+
+  // «Спробувати ще» дає свіжий відлік — інакше друга спроба була б миттєвою
+  // поразкою з уже спаленим бюджетом часу.
+  const retryWithTimer = () => {
+    retry()
+    armTimer()
+  }
 
   // Remember which formats have been tried (feeds the «all formats» achievement).
   const { mark: markFormatSeen } = useFormatsSeen()
@@ -305,10 +359,14 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     answerVoice,
     answerKana,
     answerWritten,
-    retry,
+    retry: retryWithTimer,
     skip,
     restart,
     sessionToken,
+    // timer
+    timerEnabled,
+    timerDurationMs,
+    timerGeneration,
     // stats / cues
     stats,
     lastConfused,

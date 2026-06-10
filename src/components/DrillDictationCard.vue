@@ -4,6 +4,7 @@ import type { DrillDeck } from '../composables/useDrillDeck'
 import { kanaToRomaji } from '../utils/romaji'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import DrillTimerBar from './DrillTimerBar.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -18,6 +19,9 @@ const {
   answerRomaji,
   retry,
   skip,
+  timerEnabled,
+  timerDurationMs,
+  timerGeneration,
 } = props.deck
 
 const answer = ref('')
@@ -71,6 +75,11 @@ onMounted(() => {
     :class="{ correct: lastOutcome === 'correct', wrong: lastOutcome === 'wrong' }"
   >
     <SakuraDecor />
+    <DrillTimerBar
+      v-if="timerEnabled && !lastOutcome"
+      :duration="timerDurationMs"
+      :generation="timerGeneration"
+    />
     <div class="drill-kana-row">
       <button
         class="drill-audio-button"

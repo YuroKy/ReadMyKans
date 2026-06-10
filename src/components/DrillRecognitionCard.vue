@@ -12,6 +12,7 @@ import { kanaToRomaji } from '../utils/romaji'
 import { kanaContrast } from '../utils/kanaContrast'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import DrillTimerBar from './DrillTimerBar.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -30,6 +31,9 @@ const {
   answerVoice,
   retry,
   skip,
+  timerEnabled,
+  timerDurationMs,
+  timerGeneration,
 } = props.deck
 
 const answer = ref('')
@@ -135,6 +139,11 @@ onMounted(() => focusInput())
     :class="{ correct: lastOutcome === 'correct', wrong: lastOutcome === 'wrong' }"
   >
     <SakuraDecor />
+    <DrillTimerBar
+      v-if="timerEnabled && !lastOutcome"
+      :duration="timerDurationMs"
+      :generation="timerGeneration"
+    />
     <div class="drill-kana-row">
       <strong class="drill-kana">{{ expectedKana || '—' }}</strong>
       <button

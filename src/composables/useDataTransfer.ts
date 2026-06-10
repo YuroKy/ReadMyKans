@@ -9,6 +9,7 @@ const KEYS = [
   'kana-achievements',
   'kana-formats-seen',
   'kana-drill-format',
+  'kana-drill-prefs',
   'kana-activity',
   'kana-reading-progress',
 ]

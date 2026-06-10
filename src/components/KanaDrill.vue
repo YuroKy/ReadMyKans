@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
+import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
 import DrillDictationCard from './DrillDictationCard.vue'
@@ -58,6 +59,13 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
   { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
 ]
+
+const { prefs } = useDrillPrefs()
+const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
+  { id: 'off', label: 'Без часу' },
+  { id: '5', label: '5 с' },
+  { id: '3', label: '3 с' },
+]
 </script>
 
 <template>
@@ -98,6 +106,25 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
             </optgroup>
           </select>
         </label>
+        <div
+          v-if="format === 'recognition' || format === 'dictation'"
+          class="drill-format"
+          role="group"
+          aria-label="Таймер на картку"
+        >
+          <span class="eyebrow">Таймер</span>
+          <div class="drill-format-toggle">
+            <button
+              v-for="t in TIMER_OPTIONS"
+              :key="t.id"
+              type="button"
+              :class="{ active: prefs.timer === t.id }"
+              @click="prefs.timer = t.id"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+        </div>
         <label v-if="!isSingleKanaFormat && !isWordMode" class="drill-size">
           <span class="eyebrow">Розмір шматка: {{ chunkLabel }}</span>
           <input

@@ -61,7 +61,8 @@ export default defineConfig(({ command }) => ({
         short_name: 'Kana',
         description: 'Тренування читання японської кани вголос',
         lang: 'uk',
-        theme_color: '#f45f8a',
+        // У тон фону сторінки — інакше системна смуга зверху виглядає чужою.
+        theme_color: '#fff3f5',
         background_color: '#fff7f8',
         display: 'standalone',
         orientation: 'portrait',

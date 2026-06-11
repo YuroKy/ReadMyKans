@@ -9,6 +9,7 @@ import { useDrillPrefs } from './useDrillPrefs'
 import { useFormatsSeen } from './useFormatsSeen'
 import { useStreak } from './useStreak'
 import { useToasts } from './useToasts'
+import { useSfx } from './useSfx'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
@@ -140,6 +141,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   const dailyProgress = useDailyProgress()
   const toasts = useToasts()
   const { record: recordBest } = useBestScores()
+  const { play: playSfx } = useSfx()
 
   // Streak of correct answers within the session. Burning a built-up combo is
   // the dramatic moment, so the loss gets a toast and a UI burst signal.
@@ -155,6 +157,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     if (combo.value >= 5) {
       toasts.push({ icon: '💔', title: `Комбо ×${combo.value} згоріло`, text: 'Серія обнулилась. Починай спочатку.' })
       comboBurst.value += 1
+      playSfx('combo')
     }
     recordBest('drill:combo', sessionBestCombo.value)
     combo.value = 0
@@ -163,12 +166,14 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // Auto-advance after a correct answer (same 800ms beat across formats). Every
   // answered card counts toward the daily goal; crossing it celebrates once.
   const handleOutcome = (outcome: DrillOutcome) => {
+    playSfx(outcome === 'correct' ? 'correct' : 'wrong')
     trackCombo(outcome)
     if (outcome === 'correct' && growingActive.value) {
       recordBest('drill:grow', currentChunk.value.length)
     }
     if (dailyProgress.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
+      playSfx('fanfare')
     }
     if (outcome !== 'correct') return
     window.setTimeout(() => {
@@ -328,6 +333,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   watch(isFinished, (finished) => {
     if (finished) recordBest('drill:combo', sessionBestCombo.value)
     if (finished && total.value > 0) {
+      playSfx('finish')
       track('drill-finish', {
         format: format.value,
         source: drillMode.value,

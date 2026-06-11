@@ -40,6 +40,16 @@
   box-sizing: border-box;
 }
 
+/* Фон самого html: без нього на телефоні за межами body (статус-бар,
+   оверскрол) світиться біла смуга. */
+html {
+  background: #fff7f8;
+}
+
+html[data-theme='dark'] {
+  background: #18141f;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -67,7 +77,8 @@ button:not(:disabled) {
 .app-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 24px 0 44px;
+  /* safe-area-inset-top: під viewport-fit=cover контент не залазить під чубчик */
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 0 44px;
 }
 
 .topbar {
@@ -1043,7 +1054,7 @@ h3 {
 @media (max-width: 620px) {
   .app-shell {
     width: min(100% - 20px, 1180px);
-    padding-top: 14px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
   }
 
   .topbar,
@@ -2664,9 +2675,14 @@ h3 {
     gap: 10px;
   }
 
-  /* Фіксований нижній таб-бар не має перекривати контент і футер */
+  /* Нижній таб-бар на мобільному видимий завжди — контент і футер
+     відступають від нього з урахуванням safe-area (iPhone home indicator) */
   .app-body.with-nav {
-    padding-bottom: 76px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .update-toast {
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
   }
 
   /* The summary hero matches the other heroes' mobile padding */

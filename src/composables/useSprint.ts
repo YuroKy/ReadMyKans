@@ -6,6 +6,7 @@ import { useKanaStats } from './useKanaStats'
 import { useBestScores } from './useBestScores'
 import { useDailyProgress } from './useDailyProgress'
 import { useToasts } from './useToasts'
+import { useSfx } from './useSfx'
 
 export type SprintStatus = 'idle' | 'running' | 'finished'
 
@@ -18,6 +19,7 @@ export const useSprint = (pool: Ref<string[]>, mode?: Ref<SprintMode>) => {
   const { record: recordBest, best } = useBestScores()
   const daily = useDailyProgress()
   const toasts = useToasts()
+  const { play: playSfx } = useSfx()
 
   const status = ref<SprintStatus>('idle')
   const timeLeft = ref(SPRINT_DURATION)
@@ -52,6 +54,7 @@ export const useSprint = (pool: Ref<string[]>, mode?: Ref<SprintMode>) => {
     stopTimer()
     status.value = 'finished'
     isNewRecord.value = recordBest(bestKeyFor(mode?.value ?? 'classic'), score.value)
+    playSfx(isNewRecord.value ? 'fanfare' : 'finish')
   }
 
   const start = () => {
@@ -76,6 +79,7 @@ export const useSprint = (pool: Ref<string[]>, mode?: Ref<SprintMode>) => {
   const answer = (chosen: string) => {
     if (status.value !== 'running') return
     const ok = kanaCharsEqual(chosen, target.value)
+    playSfx(ok ? 'correct' : 'wrong')
     stats.record(target.value, ok, ok ? undefined : chosen)
     if (daily.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })

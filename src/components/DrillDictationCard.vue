@@ -47,20 +47,15 @@ const replay = () => {
 }
 const focusInput = () => nextTick(() => inputEl.value?.focus())
 
-// Пропуск не повинен повертати фокус в інпут: на мобільному це піднімає
-// клавіатуру й заважає пропускати кілька карток поспіль.
-let focusAfterChange = true
-const skipCards = (count = 1) => {
-  focusAfterChange = false
-  skip(count)
-}
+const skipCards = (count = 1) => skip(count)
 
+// Фокус повертається в інпут на кожній зміні картки: на мобільному ніколи
+// не доводиться тапати інпут повторно — клавіатура лишається відкритою.
 const resetCard = () => {
   answer.value = ''
   revealed.value = false
   playsUsed.value = 0
-  if (focusAfterChange) focusInput()
-  focusAfterChange = true
+  focusInput()
   // Auto-play the new card so the learner hears it without an extra tap.
   play()
 }
@@ -69,6 +64,9 @@ watch([index, sessionToken], resetCard)
 
 const submit = () => {
   if (lastOutcome.value || !answer.value.trim()) return
+  // Refocus синхронно в жесті: тап по «Перевірити» крадe фокус, а пізніший
+  // programmatic focus() поза жестом не відкриє клавіатуру на iOS.
+  inputEl.value?.focus()
   answerRomaji(answer.value)
 }
 
@@ -120,7 +118,9 @@ onMounted(() => {
       Підказка: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b>
     </p>
 
-    <form v-if="!lastOutcome" class="drill-input-row" @submit.prevent="submit">
+    <!-- Інпут лишається змонтованим під час «правильно»-паузи (800 мс), щоб
+         фокус і мобільна клавіатура не губилися між картками. -->
+    <form v-if="lastOutcome !== 'wrong'" class="drill-input-row" @submit.prevent="submit">
       <input
         ref="inputEl"
         v-model="answer"
@@ -129,9 +129,12 @@ onMounted(() => {
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
+        enterkeyhint="go"
         placeholder="Введіть ромадзі того, що почули"
       >
-      <button class="primary-button" type="submit" :disabled="!answer.trim()">Перевірити</button>
+      <button class="primary-button" type="submit" :disabled="!answer.trim() || !!lastOutcome">
+        Перевірити
+      </button>
     </form>
 
     <div v-if="!lastOutcome" class="drill-sub-actions">

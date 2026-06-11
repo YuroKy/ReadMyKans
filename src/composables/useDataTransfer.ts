@@ -15,6 +15,7 @@ const KEYS = [
   'kana-reading-hide',
   'kana-ransom',
   'kana-exam',
+  'kana-sfx',
 ]
 
 export interface ExportBundle {

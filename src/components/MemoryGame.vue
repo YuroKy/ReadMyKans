@@ -6,6 +6,7 @@ import { track } from '../utils/analytics'
 import { useBestScores } from '../composables/useBestScores'
 import { useDailyProgress } from '../composables/useDailyProgress'
 import { useToasts } from '../composables/useToasts'
+import { useSfx } from '../composables/useSfx'
 import SakuraDecor from './SakuraDecor.vue'
 
 const emit = defineEmits<{ exit: [] }>()
@@ -18,6 +19,7 @@ const pairs = ref(6)
 const { best, has, recordLow } = useBestScores()
 const daily = useDailyProgress()
 const toasts = useToasts()
+const { play: playSfx } = useSfx()
 
 const status = ref<'setup' | 'playing' | 'won'>('setup')
 const deck = ref<MemoryCard[]>([])
@@ -72,6 +74,7 @@ const flip = (i: number) => {
     next.add(deck.value[y]!.id)
     matched.value = next
     flipped.value = []
+    playSfx('correct')
     if (daily.add(1)) {
       toasts.push({ icon: '🎯', title: 'Денну ціль виконано!', text: 'Так тримати — стрік у безпеці.' })
     }
@@ -85,6 +88,7 @@ const win = () => {
   stopTimer()
   status.value = 'won'
   isNewRecord.value = recordLow(bestKey.value, moves.value)
+  playSfx(isNewRecord.value ? 'fanfare' : 'finish')
   track('memory-win', {
     mode: mode.value,
     pairs: pairs.value,

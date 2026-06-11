@@ -11,6 +11,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'start-drill': []
+  'start-reading': []
 }>()
 
 const characterCount = computed(() => [...props.modelValue].length)
@@ -48,6 +50,16 @@ const updateText = (event: Event) => {
 
     <p v-if="error" class="field-error">{{ error }}</p>
 
+    <!-- Старт одразу під текстом: обрав/вставив — і поїхали, без скролу до hero. -->
+    <div class="text-input-actions">
+      <button class="secondary-button" type="button" @click="emit('start-drill')">
+        Тренувати кану
+      </button>
+      <button class="primary-button" type="button" @click="emit('start-reading')">
+        Почати читання
+      </button>
+    </div>
+
     <div v-if="fileInfo" class="file-summary">
       <span class="file-dot" aria-hidden="true" />
       <div>
@@ -59,3 +71,18 @@ const updateText = (event: Event) => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.text-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (max-width: 620px) {
+  .text-input-actions {
+    flex-direction: column;
+  }
+}
+</style>

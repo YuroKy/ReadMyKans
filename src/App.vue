@@ -32,6 +32,7 @@ import { useDailyProgress } from './composables/useDailyProgress'
 import { useAchievements } from './composables/useAchievements'
 import { useProgressSnapshot } from './composables/useProgressSnapshot'
 import { useToasts } from './composables/useToasts'
+import { useSfx } from './composables/useSfx'
 import { achievementById } from './utils/achievements'
 import { usePwaInstall } from './composables/usePwaInstall'
 import { usePwaUpdate } from './composables/usePwaUpdate'
@@ -75,6 +76,7 @@ const {
 const { sync: syncAchievementsStore } = useAchievements()
 const { build: buildSnapshot } = useProgressSnapshot()
 const { toasts, push: pushToast, dismiss: dismissToast } = useToasts()
+const { enabled: sfxEnabled, toggle: toggleSfx, play: playSfx } = useSfx()
 const { locked: gamesAreLocked, debtCount, ransomInProgress } = useGameLock()
 const { records: examRecords } = useExamHistory()
 const examTakenThisWeek = computed(() => attemptedThisWeek(examRecords.value, isoWeek()))
@@ -104,6 +106,7 @@ const syncAchievements = () => {
     const achievement = achievementById(id)
     if (achievement) {
       track('achievement-unlock', { achievement: id })
+      playSfx('fanfare')
       pushToast({
         icon: achievement.icon,
         achievementId: id,
@@ -230,7 +233,10 @@ const handleSessionFinished = (result: SessionResult) => {
     seconds: Math.round(result.durationMs / 1000),
   })
   // A finished reading session is worth a few cards toward today's goal.
-  if (dailyAdd(3)) pushToast(GOAL_TOAST)
+  if (dailyAdd(3)) {
+    pushToast(GOAL_TOAST)
+    playSfx('fanfare')
+  }
   // Бездоганне читання теж заробляє заморозку стріку.
   if (result.accuracy >= 100 && grantFreeze()) {
     pushToast({
@@ -343,6 +349,15 @@ const newSession = () => {
         <button
           class="theme-toggle"
           type="button"
+          :aria-label="sfxEnabled ? 'Вимкнути звуки' : 'Увімкнути звуки'"
+          :title="sfxEnabled ? 'Звуки увімкнено' : 'Звуки вимкнено'"
+          @click="toggleSfx"
+        >
+          {{ sfxEnabled ? '🔊' : '🔇' }}
+        </button>
+        <button
+          class="theme-toggle"
+          type="button"
           :aria-label="theme === 'dark' ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'"
           @click="toggleTheme"
         >
@@ -351,12 +366,15 @@ const newSession = () => {
       </div>
     </header>
 
-    <div class="app-body" :class="{ 'with-nav': showSidebar }">
+    <div class="app-body with-nav">
+      <!-- На десктопі сесійні view лишаються фокус-режимами (rail ховається),
+           на мобільному нижній таб-бар видимий завжди. -->
       <AppSidebar
-        v-if="showSidebar"
+        :class="{ 'rail-only-mobile': !showSidebar }"
         :view="view"
         :games-locked="gamesAreLocked"
         :exam-taken="examTakenThisWeek"
+        :drill-badge="debtCount"
         @navigate="handleNavigate"
       />
 
@@ -372,10 +390,6 @@ const newSession = () => {
                 каною для повторення.
               </p>
             </div>
-            <div class="intro-actions">
-              <button class="secondary-button" type="button" @click="startDrill">Тренувати кану</button>
-              <button class="primary-button" type="button" @click="startReading">Почати читання</button>
-            </div>
           </section>
 
           <DebtRansomPanel v-if="gamesAreLocked || ransomInProgress" />
@@ -383,7 +397,13 @@ const newSession = () => {
           <div class="setup-grid">
             <div class="main-column">
               <TextLibraryPanel :current-text="sourceText" @select="handleLibrarySelect" />
-              <TextInputPanel v-model="sourceText" :file-info="fileInfo" :error="setupError" />
+              <TextInputPanel
+                v-model="sourceText"
+                :file-info="fileInfo"
+                :error="setupError"
+                @start-drill="startDrill"
+                @start-reading="startReading"
+              />
               <FileUploadPanel
                 @loaded="handleFileLoaded"
                 @error="(message) => (uploadError = message)"
@@ -553,7 +573,7 @@ const newSession = () => {
 /* На мобільному тости піднімаються над нижнім таб-баром */
 @media (max-width: 620px) {
   .toast-stack {
-    bottom: 84px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 }
 </style>

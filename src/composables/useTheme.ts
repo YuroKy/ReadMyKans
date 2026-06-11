@@ -22,6 +22,11 @@ const read = (): Theme => {
 const apply = (theme: Theme) => {
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.theme = theme
+    // Колір статус-бара/адресного рядка на мобільному — у тон фону сторінки,
+    // інакше зверху лишається біла смуга, що не збігається з темою.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#18141f' : '#fff3f5')
   }
 }
 

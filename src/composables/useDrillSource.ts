@@ -5,6 +5,7 @@ import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
 import { NUMBER_WORDS } from '../data/numbers'
 import { orderByUrgency } from '../data/wordSources'
+import { useCustomVocab } from './useCustomVocab'
 import { orderBySrs, todayString } from '../utils/srs'
 import { clusterFor, ALL_CLUSTER_KANA } from '../utils/minimalPairs'
 
@@ -22,6 +23,7 @@ export const isWordSource = (mode: string): boolean => WORD_MODES.has(mode)
 export const useDrillSource = (mode: Ref<string>) => {
   const { stats, weak } = useKanaStats()
   const { schedule } = useSrsSchedule()
+  const { entries: customWords } = useCustomVocab()
   const sets = buildKanaSets()
   const setById = new Map(sets.map((set) => [set.id, set]))
 
@@ -42,6 +44,14 @@ export const useDrillSource = (mode: Ref<string>) => {
 
     if (current === 'numbers') {
       return orderByUrgency(NUMBER_WORDS, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    // Порожній власний словник віддає '' — дека впаде назад на текст
+    // (modeFellBack), а UI підкаже додати слова.
+    if (current === 'custom') {
+      return orderByUrgency(customWords.value, stats.value, schedule.value)
         .map((entry) => entry.kana)
         .join('　')
     }

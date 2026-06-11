@@ -2,6 +2,7 @@
 import { ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
 import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
+import { useCustomVocab } from '../composables/useCustomVocab'
 import { useBestScores } from '../composables/useBestScores'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
@@ -46,6 +47,8 @@ const {
 } = deck
 
 const { best } = useBestScores()
+
+const { rawText: customText, entries: customEntries, errors: customErrors } = useCustomVocab()
 
 // Короткий сплеск анімації, коли комбо згоріло.
 const comboShake = ref(false)
@@ -109,6 +112,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             <option value="executioner">🪓 Кат (мінімальні пари)</option>
             <option value="vocab">Словник N5</option>
             <option value="numbers">🔢 Числа і час</option>
+            <option value="custom">📝 Мій словник</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
             </optgroup>
@@ -196,6 +200,27 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
           >
         </label>
       </div>
+    </section>
+
+    <section v-if="drillMode === 'custom'" class="panel custom-vocab-editor">
+      <span class="eyebrow">Мій словник</span>
+      <p class="custom-vocab-help">
+        Один рядок — одне слово: <code>かな = переклад</code> або <code>かな, переклад</code>.
+        Зберігається автоматично.
+      </p>
+      <textarea
+        v-model="customText"
+        class="custom-vocab-textarea"
+        rows="6"
+        placeholder="ねこ = котик
+コーヒー, кава"
+      />
+      <p class="custom-vocab-help">Розпізнано слів: {{ customEntries.length }}</p>
+      <ul v-if="customErrors.length" class="custom-vocab-errors">
+        <li v-for="err in customErrors" :key="`${err.line}-${err.text}`">
+          рядок {{ err.line }}: {{ err.reason }} — «{{ err.text }}»
+        </li>
+      </ul>
     </section>
 
     <p v-if="modeFellBack" class="drill-mode-note">
@@ -455,5 +480,36 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
   margin: 0;
   max-width: 46ch;
   color: var(--muted);
+}
+
+.custom-vocab-editor {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.custom-vocab-help {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.custom-vocab-textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+}
+
+.custom-vocab-errors {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--rose-strong);
 }
 </style>

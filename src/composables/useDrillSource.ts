@@ -3,10 +3,19 @@ import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
-import { orderBySrs, reviewPriority, todayString } from '../utils/srs'
+import { NUMBER_WORDS } from '../data/numbers'
+import { KANJI_N5 } from '../data/kanjiN5'
+import { orderByUrgency } from '../data/wordSources'
+import { useCustomVocab } from './useCustomVocab'
+import { orderBySrs, todayString } from '../utils/srs'
 import { clusterFor, ALL_CLUSTER_KANA } from '../utils/minimalPairs'
 
 export const DRILL_MODE_TEXT = 'text'
+
+// «Словесні» джерела подають слова через повноширинний пробіл — дека форсує
+// картку «ціле слово» і показує переклад у фідбеку.
+const WORD_MODES = new Set(['vocab', 'numbers', 'custom', 'kanji'])
+export const isWordSource = (mode: string): boolean => WORD_MODES.has(mode)
 
 // Resolves the kana to drill from a selected mode. Returns `null` for the
 // «text» mode (the caller should use the raw source text) and a kana string
@@ -15,6 +24,7 @@ export const DRILL_MODE_TEXT = 'text'
 export const useDrillSource = (mode: Ref<string>) => {
   const { stats, weak } = useKanaStats()
   const { schedule } = useSrsSchedule()
+  const { entries: customWords } = useCustomVocab()
   const sets = buildKanaSets()
   const setById = new Map(sets.map((set) => [set.id, set]))
 
@@ -28,13 +38,29 @@ export const useDrillSource = (mode: Ref<string>) => {
     // Слова через повноширинний пробіл — чанкінг дрила ріже по словах.
     // Першими йдуть слова, чия найслабша кана найтерміновіша.
     if (current === 'vocab') {
-      const today = todayString()
-      const urgency = (word: string): number =>
-        Math.max(
-          ...[...word].map((kana) => reviewPriority(stats.value[kana], schedule.value[kana], today)),
-        )
-      return [...VOCABULARY]
-        .sort((a, b) => urgency(b.kana) - urgency(a.kana))
+      return orderByUrgency(VOCABULARY, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    if (current === 'numbers') {
+      return orderByUrgency(NUMBER_WORDS, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    // Кандзі-джерело подає ЧИТАННЯ (відповідь картки); гліф дека бере з
+    // kanjiWordFor. Терміновість — за каною читання, як і всюди.
+    if (current === 'kanji') {
+      return orderByUrgency(KANJI_N5, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    // Порожній власний словник віддає '' — дека впаде назад на текст
+    // (modeFellBack), а UI підкаже додати слова.
+    if (current === 'custom') {
+      return orderByUrgency(customWords.value, stats.value, schedule.value)
         .map((entry) => entry.kana)
         .join('　')
     }

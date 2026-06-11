@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, toRef, watch } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
 import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
+import { useCustomVocab } from '../composables/useCustomVocab'
 import { useBestScores } from '../composables/useBestScores'
 import { kanaToRomaji } from '../utils/romaji'
 import DrillRecognitionCard from './DrillRecognitionCard.vue'
 import DrillDictationCard from './DrillDictationCard.vue'
 import DrillChoiceCard from './DrillChoiceCard.vue'
 import DrillWritingCard from './DrillWritingCard.vue'
+import DrillAnagramCard from './DrillAnagramCard.vue'
 import SakuraDecor from './SakuraDecor.vue'
 
 const props = defineProps<{ sourceText: string }>()
@@ -47,6 +49,8 @@ const {
 
 const { best } = useBestScores()
 
+const { rawText: customText, entries: customEntries, errors: customErrors } = useCustomVocab()
+
 // Короткий сплеск анімації, коли комбо згоріло.
 const comboShake = ref(false)
 watch(comboBurst, () => {
@@ -64,7 +68,20 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'dictation', label: 'Диктант', hint: 'Чуєш звук → пишеш кану' },
   { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
   { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
+  { id: 'anagram', label: '🧩 Анаграма', hint: 'Збери слово з перемішаних плиток кани' },
 ]
+
+// Single-kana формати ламають кандзі-слова (форсують розрізання читання),
+// тож для кандзі-джерела їх немає, а вибраний формат мʼяко коєрситься.
+const KANJI_UNSUPPORTED: DrillFormat[] = ['choice', 'writing']
+const availableFormats = computed(() =>
+  drillMode.value === 'kanji' ? FORMATS.filter((f) => !KANJI_UNSUPPORTED.includes(f.id)) : FORMATS,
+)
+watch([drillMode, format], () => {
+  if (drillMode.value === 'kanji' && KANJI_UNSUPPORTED.includes(format.value)) {
+    format.value = 'recognition'
+  }
+})
 
 const { prefs } = useDrillPrefs()
 const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
@@ -88,7 +105,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
           <span class="eyebrow">Формат</span>
           <div class="drill-format-toggle">
             <button
-              v-for="f in FORMATS"
+              v-for="f in availableFormats"
               :key="f.id"
               type="button"
               :class="{ active: format === f.id }"
@@ -108,6 +125,9 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             <option value="confusions">Мої плутанини</option>
             <option value="executioner">🪓 Кат (мінімальні пари)</option>
             <option value="vocab">Словник N5</option>
+            <option value="numbers">🔢 Числа і час</option>
+            <option value="kanji">㊀ Кандзі N5</option>
+            <option value="custom">📝 Мій словник</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
             </optgroup>
@@ -129,6 +149,27 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
               @click="prefs.timer = t.id"
             >
               {{ t.label }}
+            </button>
+          </div>
+        </div>
+        <div v-if="format === 'dictation'" class="drill-format" role="group" aria-label="Спосіб вводу">
+          <span class="eyebrow">Ввід</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: prefs.dictationInput === 'romaji' }"
+              title="Відповідь ромадзі з клавіатури"
+              @click="prefs.dictationInput = 'romaji'"
+            >
+              Ромадзі
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.dictationInput === 'kana' }"
+              title="Відповідь каною з екранної ґодзюон-клавіатури"
+              @click="prefs.dictationInput = 'kana'"
+            >
+              あ Кана
             </button>
           </div>
         </div>
@@ -195,6 +236,27 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
           >
         </label>
       </div>
+    </section>
+
+    <section v-if="drillMode === 'custom'" class="panel custom-vocab-editor">
+      <span class="eyebrow">Мій словник</span>
+      <p class="custom-vocab-help">
+        Один рядок — одне слово: <code>かな = переклад</code> або <code>かな, переклад</code>.
+        Зберігається автоматично.
+      </p>
+      <textarea
+        v-model="customText"
+        class="custom-vocab-textarea"
+        rows="6"
+        placeholder="ねこ = котик
+コーヒー, кава"
+      />
+      <p class="custom-vocab-help">Розпізнано слів: {{ customEntries.length }}</p>
+      <ul v-if="customErrors.length" class="custom-vocab-errors">
+        <li v-for="err in customErrors" :key="`${err.line}-${err.text}`">
+          рядок {{ err.line }}: {{ err.reason }} — «{{ err.text }}»
+        </li>
+      </ul>
     </section>
 
     <p v-if="modeFellBack" class="drill-mode-note">
@@ -339,6 +401,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
     <DrillRecognitionCard v-else-if="format === 'recognition'" :deck="deck" />
     <DrillDictationCard v-else-if="format === 'dictation'" :deck="deck" />
     <DrillChoiceCard v-else-if="format === 'choice'" :deck="deck" />
+    <DrillAnagramCard v-else-if="format === 'anagram'" :deck="deck" />
     <DrillWritingCard v-else :deck="deck" />
   </main>
 </template>
@@ -454,5 +517,36 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
   margin: 0;
   max-width: 46ch;
   color: var(--muted);
+}
+
+.custom-vocab-editor {
+  display: grid;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.custom-vocab-help {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.custom-vocab-textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
+  font-size: 1rem;
+}
+
+.custom-vocab-errors {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--rose-strong);
 }
 </style>

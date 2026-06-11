@@ -16,6 +16,7 @@ const KEYS = [
   'kana-ransom',
   'kana-exam',
   'kana-sfx',
+  'kana-custom-vocab',
 ]
 
 export interface ExportBundle {

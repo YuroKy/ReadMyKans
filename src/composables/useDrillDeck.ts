@@ -1,6 +1,6 @@
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { useKanaDrill } from './useKanaDrill'
-import { useDrillSource } from './useDrillSource'
+import { isWordSource, useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { useDailyProgress } from './useDailyProgress'
@@ -13,12 +13,12 @@ import { useSfx } from './useSfx'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
-import { translationFor } from '../data/vocabulary'
+import { kanjiWordFor, translationFor } from '../data/wordSources'
 import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
 import { track } from '../utils/analytics'
 
-export type DrillFormat = 'recognition' | 'dictation' | 'choice' | 'writing'
+export type DrillFormat = 'recognition' | 'dictation' | 'choice' | 'writing' | 'anagram'
 export type DrillOutcome = 'correct' | 'wrong'
 
 const WHOLE_WORD = 6
@@ -30,7 +30,7 @@ const SRS_UNIVERSE = [...HIRAGANA_ROWS.flat(), ...KATAKANA_ROWS.flat()].filter(B
 
 const FORMAT_KEY = 'kana-drill-format'
 const isFormat = (v: unknown): v is DrillFormat =>
-  v === 'recognition' || v === 'dictation' || v === 'choice' || v === 'writing'
+  v === 'recognition' || v === 'dictation' || v === 'choice' || v === 'writing' || v === 'anagram'
 const loadFormat = (): DrillFormat => {
   if (typeof window === 'undefined') return 'recognition'
   const stored = localStorage.getItem(FORMAT_KEY)
@@ -53,11 +53,14 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const chunkSize = ref(1)
   const isSingleKanaFormat = computed(() => SINGLE_KANA_FORMATS.includes(format.value))
-  const isWordMode = computed(() => drillMode.value === 'vocab')
+  const isWordMode = computed(() => isWordSource(drillMode.value))
   const effectiveChunkSize = computed(() => {
     if (isSingleKanaFormat.value) return 1
     if (isWordMode.value) return Number.MAX_SAFE_INTEGER
-    return chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
+    const size = chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
+    // Анаграмі потрібно що збирати: одна плитка — не пазл.
+    if (format.value === 'anagram') return Math.max(2, size)
+    return size
   })
 
   // Зростаючий чанк має сенс лише там, де чанк взагалі багатоканний.
@@ -113,10 +116,24 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const isSingleKana = computed(() => currentChunk.value.length === 1)
 
-  // Переклад картки у словниковому режимі ('' поза ним або без збігу).
-  const currentTranslation = computed(() =>
-    isWordMode.value ? translationFor(expectedKana.value) : '',
+  // У кандзі-джерелі переклад і гліф беруться з кандзі-індексу — читання
+  // часто збігаються зі словами словника N5, але картка має показувати 山.
+  const kanjiWord = computed(() =>
+    drillMode.value === 'kanji' ? kanjiWordFor(expectedKana.value) : undefined,
   )
+
+  // Переклад картки у словесних режимах і при шматку «слово» в текстовому
+  // режимі — там картка теж є цілим словом, тож відомі слова підписуються
+  // ('' без збігу зі словниками — UI ховає рядок).
+  const isWholeWordChunk = computed(() => effectiveChunkSize.value === Number.MAX_SAFE_INTEGER)
+  const currentTranslation = computed(() => {
+    if (kanjiWord.value) return kanjiWord.value.translation
+    return isWordMode.value || isWholeWordChunk.value ? translationFor(expectedKana.value) : ''
+  })
+
+  // Гліф для показу замість кани (кандзі-слова): картка показує display,
+  // а відповіддю лишається кана (читання).
+  const currentDisplay = computed(() => kanjiWord.value?.display ?? '')
 
   // --- Stats & SRS recording -------------------------------------------------
   const stats = useKanaStats()
@@ -408,6 +425,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     lastAnswer,
     isSingleKana,
     currentTranslation,
+    currentDisplay,
     // answering
     answerRomaji,
     answerVoice,

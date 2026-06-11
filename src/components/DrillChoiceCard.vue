@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
 import { kanaContrast } from '../utils/kanaContrast'
+import { mnemonicFor } from '../data/mnemonics'
 import { buildChoices } from '../utils/drillDistractors'
 import { clusterFor } from '../utils/minimalPairs'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
@@ -70,7 +71,23 @@ const contrast = computed(() =>
     : null,
 )
 
-onMounted(buildTiles)
+const mnemonic = computed(() => mnemonicFor(expectedKana.value))
+
+// Десктоп: клавіші 1–4 тапають відповідну плитку.
+const onKeydown = (event: KeyboardEvent) => {
+  if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
+  const slot = Number.parseInt(event.key, 10) - 1
+  const tile = slot >= 0 ? choices.value[slot] : undefined
+  if (!tile) return
+  event.preventDefault()
+  choose(tile)
+}
+
+onMounted(() => {
+  buildTiles()
+  window.addEventListener('keydown', onKeydown)
+})
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -98,7 +115,7 @@ onMounted(buildTiles)
 
     <div class="drill-choice-grid" role="group" aria-label="Варіанти кани">
       <button
-        v-for="tile in choices"
+        v-for="(tile, slot) in choices"
         :key="tile"
         type="button"
         class="drill-choice-tile"
@@ -107,6 +124,7 @@ onMounted(buildTiles)
         @click="choose(tile)"
       >
         {{ tile }}
+        <span class="tile-hotkey" aria-hidden="true">{{ slot + 1 }}</span>
       </button>
     </div>
 
@@ -130,6 +148,7 @@ onMounted(buildTiles)
       <p v-if="contrast" class="drill-contrast">
         {{ contrast.note }}
       </p>
+      <p v-if="mnemonic" class="drill-contrast">🧠 {{ mnemonic }}</p>
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>
@@ -168,6 +187,7 @@ onMounted(buildTiles)
 }
 
 .drill-choice-tile {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -206,5 +226,22 @@ onMounted(buildTiles)
 
 .drill-choice-tile.dim {
   opacity: 0.45;
+}
+
+/* Бейдж гарячої клавіші — лише там, де є фізична клавіатура. */
+.tile-hotkey {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tile-hotkey {
+    display: block;
+  }
 }
 </style>

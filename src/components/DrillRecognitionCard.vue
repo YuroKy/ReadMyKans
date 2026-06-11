@@ -10,6 +10,7 @@ import { usePushToTalk } from '../composables/usePushToTalk'
 import { isWeak, topConfusion } from '../composables/useKanaStats'
 import { kanaToRomaji } from '../utils/romaji'
 import { kanaContrast } from '../utils/kanaContrast'
+import { mnemonicFor } from '../data/mnemonics'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
@@ -25,6 +26,7 @@ const {
   lastConfused,
   isSingleKana,
   currentTranslation,
+  currentDisplay,
   stats,
   index,
   sessionToken,
@@ -129,6 +131,10 @@ const contrast = computed(() =>
     : null,
 )
 
+// Мнемоніка форми: для слабкої кани — одразу як підказка, після помилки —
+// завжди (образ чіпляється краще за «правильно: mu»).
+const mnemonic = computed(() => (isSingleKana.value ? mnemonicFor(expectedKana.value) : ''))
+
 onMounted(() => focusInput())
 </script>
 
@@ -143,8 +149,9 @@ onMounted(() => focusInput())
       :duration="timerDurationMs"
       :generation="timerGeneration"
     />
+    <!-- Кандзі-слово показуємо гліфом — читання (кана) зʼявиться у фідбеку. -->
     <div class="drill-kana-row">
-      <strong class="drill-kana"><KanaText :text="expectedKana || '—'" /></strong>
+      <strong class="drill-kana"><KanaText :text="currentDisplay || expectedKana || '—'" /></strong>
       <button
         class="speaker-button"
         type="button"
@@ -162,6 +169,7 @@ onMounted(() => focusInput())
       <span v-if="confusionHint" class="drill-cue confuse">
         💡 Не сплутай з <b>{{ confusionHint }}</b>
       </span>
+      <span v-if="weakBadge && mnemonic" class="drill-cue mnemonic">🧠 {{ mnemonic }}</span>
     </div>
 
     <p v-if="revealed && !lastOutcome" class="drill-hint">
@@ -228,19 +236,20 @@ onMounted(() => focusInput())
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
       <strong>✓ Правильно!</strong>
-      <span>{{ expectedKana }} = {{ expectedRomaji }}</span>
+      <span>{{ currentDisplay ? `${currentDisplay} = ` : '' }}{{ expectedKana }} = {{ expectedRomaji }}</span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
     </div>
 
     <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
       <strong>✗ Не зараховано</strong>
       <span>Ви назвали: <b>{{ youSaidRomaji || '—' }}</b></span>
-      <span>Правильно: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
+      <span>Правильно: <b v-if="currentDisplay">{{ currentDisplay }}</b> <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
 
       <p v-if="contrast" class="drill-contrast">
         {{ contrast.note }}
       </p>
+      <p v-if="mnemonic" class="drill-contrast">🧠 {{ mnemonic }}</p>
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>

@@ -2582,6 +2582,12 @@ h3 {
   border-color: rgba(255, 255, 255, 0.06);
 }
 
+/* Підказки у фідбеку дрила: світлий фон .drill-contrast у темній темі зливає
+   світлий текст — даємо напівпрозору «вставку» поверх темної картки. */
+[data-theme='dark'] .drill-contrast {
+  background: rgba(255, 255, 255, 0.09);
+}
+
 /* Inset surfaces (cards, chips, inputs) */
 [data-theme='dark'] .mini-stat,
 [data-theme='dark'] .counter-row span,

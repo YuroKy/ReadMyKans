@@ -368,15 +368,18 @@ const newSession = () => {
 
     <div class="app-body with-nav">
       <!-- На десктопі сесійні view лишаються фокус-режимами (rail ховається),
-           на мобільному нижній таб-бар видимий завжди. -->
-      <AppSidebar
-        :class="{ 'rail-only-mobile': !showSidebar }"
-        :view="view"
-        :games-locked="gamesAreLocked"
-        :exam-taken="examTakenThisWeek"
-        :drill-badge="debtCount"
-        @navigate="handleNavigate"
-      />
+           на мобільному нижній таб-бар видимий завжди. Денна ціль живе під
+           сайдбаром на десктопі і в side-column на мобільному (стан — singleton). -->
+      <div class="app-rail" :class="{ 'rail-only-mobile': !showSidebar }">
+        <AppSidebar
+          :view="view"
+          :games-locked="gamesAreLocked"
+          :exam-taken="examTakenThisWeek"
+          :drill-badge="debtCount"
+          @navigate="handleNavigate"
+        />
+        <DailyGoalPanel class="rail-daily" />
+      </div>
 
       <div class="app-content">
         <main v-if="view === 'setup'" class="setup-layout">
@@ -413,7 +416,7 @@ const newSession = () => {
 
             <aside class="side-column">
               <KanaStatsPanel :analysis="kanaAnalysis" />
-              <DailyGoalPanel />
+              <DailyGoalPanel class="mobile-daily" />
               <KanaMasteryPanel />
               <ActivityCalendar />
               <KanaReferenceTable />

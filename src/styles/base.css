@@ -124,6 +124,81 @@ button:not(:disabled) {
   align-items: flex-start;
 }
 
+/* Ліва рейка: сайдбар + картка денної цілі, липне разом. */
+@media (min-width: 621px) {
+  .app-rail {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 224px;
+    flex-shrink: 0;
+  }
+
+  /* На десктопі сесійні view — фокус-режими: вся рейка ховається. */
+  .app-rail.rail-only-mobile {
+    display: none;
+  }
+
+  /* У рейці денна ціль вертикальна: кільце над текстом, по центру.
+     Вужча картка — компактніша шапка, щоб заголовок не ламався. */
+  .rail-daily {
+    padding: 16px 14px;
+  }
+
+  .rail-daily .section-heading {
+    align-items: center;
+  }
+
+  .rail-daily .section-heading h2 {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  .rail-daily .eyebrow {
+    white-space: nowrap;
+  }
+
+  .rail-daily .daily-body {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  /* Компактне кільце: 132px-версія з мамонтовою тінню у вузькій картці «пливе». */
+  .rail-daily .accuracy-ring {
+    width: 104px;
+    box-shadow: 0 10px 24px rgba(244, 95, 138, 0.16);
+  }
+
+  .rail-daily .accuracy-ring strong {
+    font-size: 1.5rem;
+  }
+
+  .rail-daily .accuracy-ring span {
+    font-size: 0.72rem;
+  }
+
+  /* Дубль у side-column — лише для мобільного. Три класи, щоб перебити
+     scoped-правило .daily-panel[data-v] компонента. */
+  .app-body .side-column .mobile-daily {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  /* Рейка розчиняється: сайдбар сам стає фіксованим нижнім баром. */
+  .app-rail {
+    display: contents;
+  }
+
+  /* Три класи — перебиваємо scoped-правило .daily-panel[data-v] компонента. */
+  .app-body .app-rail .rail-daily {
+    display: none;
+  }
+}
+
 .app-content {
   flex: 1 1 0;
   min-width: 0;

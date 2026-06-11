@@ -13,6 +13,7 @@ import { kanaContrast } from '../utils/kanaContrast'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
+import KanaText from './KanaText.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -145,7 +146,7 @@ onMounted(() => focusInput())
       :generation="timerGeneration"
     />
     <div class="drill-kana-row">
-      <strong class="drill-kana">{{ expectedKana || '—' }}</strong>
+      <strong class="drill-kana"><KanaText :text="expectedKana || '—'" /></strong>
       <button
         class="speaker-button"
         type="button"

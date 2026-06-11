@@ -6,6 +6,7 @@ import { kanaToRomaji } from '../utils/romaji'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
+import KanaText from './KanaText.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -105,7 +106,7 @@ onMounted(() => {
         aria-label="Прослухати кану"
         @click="replay"
       >
-        <span v-if="lastOutcome">{{ expectedKana }}</span>
+        <span v-if="lastOutcome"><KanaText :text="expectedKana" /></span>
         <span v-else aria-hidden="true">🔊</span>
       </button>
     </div>

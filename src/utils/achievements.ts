@@ -103,7 +103,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'combo-20',
     title: 'Серійний',
-    description: '20 правильних поспіль у дрилі',
+    description: '20 правильних поспіль у тренуванні',
     icon: '🔥',
     test: (s) => s.bestDrillCombo >= 20,
     progress: (s) => ({ current: Math.min(s.bestDrillCombo, 20), target: 20 }),

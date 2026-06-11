@@ -22,7 +22,7 @@ interface NavItem {
 
 const items = computed<NavItem[]>(() => [
   { id: 'home', icon: '⛩️', label: 'Головна' },
-  { id: 'drill', icon: 'あ', label: 'Дрил' },
+  { id: 'drill', icon: 'あ', label: 'Тренування' },
   { id: 'reading', icon: '📖', label: 'Читання' },
   {
     id: 'sprint',

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { isHiragana, isKatakana, isKana, extractKana, analyzeKana } from './kana'
+import { isHiragana, isKatakana, isKana, isSmallKana, extractKana, analyzeKana } from './kana'
 
 describe('класифікація кани', () => {
   it('хірагана', () => {
@@ -19,6 +19,16 @@ describe('класифікація кани', () => {
     assert.equal(isKana('ア'), true)
     assert.equal(isKana('漢'), false)
     assert.equal(isKana('a'), false)
+  })
+
+  it('isSmallKana — малі кани обох абеток', () => {
+    assert.equal(isSmallKana('ょ'), true)
+    assert.equal(isSmallKana('っ'), true)
+    assert.equal(isSmallKana('ャ'), true)
+    assert.equal(isSmallKana('ッ'), true)
+    assert.equal(isSmallKana('よ'), false)
+    assert.equal(isSmallKana('つ'), false)
+    assert.equal(isSmallKana('ー'), false)
   })
 })
 

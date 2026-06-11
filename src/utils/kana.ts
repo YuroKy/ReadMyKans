@@ -32,6 +32,10 @@ export const isKatakana = (char: string) => /[\u30A1-\u30FA\u30FC]/u.test(char)
 
 export const isKana = (char: string) => isHiragana(char) || isKatakana(char)
 
+const SMALL_KANA = new Set([...'ぁぃぅぇぉゃゅょゎっァィゥェォャュョヮッ'])
+
+export const isSmallKana = (char: string) => SMALL_KANA.has(char)
+
 export const extractKana = (text: string): string[] => [...text].filter(isKana)
 
 export const analyzeKana = (text: string): KanaAnalysis => {

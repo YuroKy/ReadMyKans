@@ -9,6 +9,7 @@ import DrillRecognitionCard from './DrillRecognitionCard.vue'
 import DrillDictationCard from './DrillDictationCard.vue'
 import DrillChoiceCard from './DrillChoiceCard.vue'
 import DrillWritingCard from './DrillWritingCard.vue'
+import DrillAnagramCard from './DrillAnagramCard.vue'
 import SakuraDecor from './SakuraDecor.vue'
 
 const props = defineProps<{ sourceText: string }>()
@@ -67,6 +68,7 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'dictation', label: 'Диктант', hint: 'Чуєш звук → пишеш кану' },
   { id: 'choice', label: 'Вибір', hint: 'Звук → обираєш кану' },
   { id: 'writing', label: 'Письмо', hint: 'Обведи кану за рисками' },
+  { id: 'anagram', label: '🧩 Анаграма', hint: 'Збери слово з перемішаних плиток кани' },
 ]
 
 const { prefs } = useDrillPrefs()
@@ -365,6 +367,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
     <DrillRecognitionCard v-else-if="format === 'recognition'" :deck="deck" />
     <DrillDictationCard v-else-if="format === 'dictation'" :deck="deck" />
     <DrillChoiceCard v-else-if="format === 'choice'" :deck="deck" />
+    <DrillAnagramCard v-else-if="format === 'anagram'" :deck="deck" />
     <DrillWritingCard v-else :deck="deck" />
   </main>
 </template>

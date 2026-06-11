@@ -18,7 +18,7 @@ import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
 import { track } from '../utils/analytics'
 
-export type DrillFormat = 'recognition' | 'dictation' | 'choice' | 'writing'
+export type DrillFormat = 'recognition' | 'dictation' | 'choice' | 'writing' | 'anagram'
 export type DrillOutcome = 'correct' | 'wrong'
 
 const WHOLE_WORD = 6
@@ -30,7 +30,7 @@ const SRS_UNIVERSE = [...HIRAGANA_ROWS.flat(), ...KATAKANA_ROWS.flat()].filter(B
 
 const FORMAT_KEY = 'kana-drill-format'
 const isFormat = (v: unknown): v is DrillFormat =>
-  v === 'recognition' || v === 'dictation' || v === 'choice' || v === 'writing'
+  v === 'recognition' || v === 'dictation' || v === 'choice' || v === 'writing' || v === 'anagram'
 const loadFormat = (): DrillFormat => {
   if (typeof window === 'undefined') return 'recognition'
   const stored = localStorage.getItem(FORMAT_KEY)
@@ -57,7 +57,10 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   const effectiveChunkSize = computed(() => {
     if (isSingleKanaFormat.value) return 1
     if (isWordMode.value) return Number.MAX_SAFE_INTEGER
-    return chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
+    const size = chunkSize.value >= WHOLE_WORD ? Number.MAX_SAFE_INTEGER : chunkSize.value
+    // Анаграмі потрібно що збирати: одна плитка — не пазл.
+    if (format.value === 'anagram') return Math.max(2, size)
+    return size
   })
 
   // Зростаючий чанк має сенс лише там, де чанк взагалі багатоканний.

@@ -54,7 +54,8 @@ const furiganaMode = ref<'off' | 'furigana' | 'romaji'>('off')
 // «Зникаючий текст»: off / fade (прочитане блюриться) / flash (вікно тексту
 // блимає на 2 с і ховається — читаєш з памʼяті). Persisted окремим ключем.
 const HIDE_KEY = 'kana-reading-hide'
-const isHideMode = (v: unknown): v is HideMode => v === 'off' || v === 'fade' || v === 'flash'
+const isHideMode = (v: unknown): v is HideMode =>
+  v === 'off' || v === 'fade' || v === 'flash' || v === 'rsvp'
 const loadHideMode = (): HideMode => {
   if (typeof window === 'undefined') return 'off'
   const stored = localStorage.getItem(HIDE_KEY)
@@ -417,6 +418,14 @@ onBeforeUnmount(() => {
               @click="hideMode = 'flash'"
             >
               ⚡ Блимання
+            </button>
+            <button
+              type="button"
+              title="Видно лише вікно з 8 кан попереду курсора — читай у фокусі"
+              :class="{ active: hideMode === 'rsvp' }"
+              @click="hideMode = 'rsvp'"
+            >
+              🎯 Фокус
             </button>
           </div>
           <button

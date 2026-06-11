@@ -2,7 +2,7 @@
 // перечитати), а в режимі «блимання» майбутній текст видно лише поки вікно
 // щойно відкрилось — далі кажи з пам'яті.
 
-export type HideMode = 'off' | 'fade' | 'flash'
+export type HideMode = 'off' | 'fade' | 'flash' | 'rsvp'
 export type CharVisibility = 'visible' | 'blurred' | 'masked'
 
 export const FLASH_WINDOW = 8
@@ -21,6 +21,8 @@ export const charVisibility = (
   if (charIndex < currentIndex) return 'blurred'
   if (mode === 'fade') return 'visible'
   const size = Math.max(1, windowSize)
+  // «Фокус» (rsvp): видиме лише ковзне вікно попереду курсора — без блимань.
+  if (mode === 'rsvp') return charIndex - currentIndex < size ? 'visible' : 'masked'
   const sameWindow = Math.floor(charIndex / size) === Math.floor(currentIndex / size)
   if (sameWindow) return flashActive ? 'visible' : 'masked'
   return 'masked'

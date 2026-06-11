@@ -1,6 +1,6 @@
 import { afterEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { displayFor, orderByUrgency, setCustomWords, translationFor, type WordEntry } from './wordSources'
+import { kanjiWordFor, orderByUrgency, setCustomWords, translationFor, type WordEntry } from './wordSources'
 
 describe('wordSources', () => {
   afterEach(() => setCustomWords([]))
@@ -16,9 +16,10 @@ describe('wordSources', () => {
     assert.equal(translationFor('こーひー'), 'кава')
   })
 
-  it('displayFor порожній для слів без гліфа', () => {
-    assert.equal(displayFor('ねこ'), '')
-    assert.equal(displayFor('ぬぬぬ'), '')
+  it('kanjiWordFor шукає гліф за читанням і не залежить від словника N5', () => {
+    // やま є і в словнику (без гліфа), і в кандзі-наборі — гліф має знайтись.
+    assert.equal(kanjiWordFor('やま')?.display, '山')
+    assert.equal(kanjiWordFor('ぬぬぬ'), undefined)
   })
 
   it('власні слова додаються і перекривають вбудовані', () => {

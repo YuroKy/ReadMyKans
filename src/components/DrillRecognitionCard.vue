@@ -26,6 +26,7 @@ const {
   lastConfused,
   isSingleKana,
   currentTranslation,
+  currentDisplay,
   stats,
   index,
   sessionToken,
@@ -148,8 +149,9 @@ onMounted(() => focusInput())
       :duration="timerDurationMs"
       :generation="timerGeneration"
     />
+    <!-- Кандзі-слово показуємо гліфом — читання (кана) зʼявиться у фідбеку. -->
     <div class="drill-kana-row">
-      <strong class="drill-kana"><KanaText :text="expectedKana || '—'" /></strong>
+      <strong class="drill-kana"><KanaText :text="currentDisplay || expectedKana || '—'" /></strong>
       <button
         class="speaker-button"
         type="button"
@@ -234,14 +236,14 @@ onMounted(() => focusInput())
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
       <strong>✓ Правильно!</strong>
-      <span>{{ expectedKana }} = {{ expectedRomaji }}</span>
+      <span>{{ currentDisplay ? `${currentDisplay} = ` : '' }}{{ expectedKana }} = {{ expectedRomaji }}</span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
     </div>
 
     <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
       <strong>✗ Не зараховано</strong>
       <span>Ви назвали: <b>{{ youSaidRomaji || '—' }}</b></span>
-      <span>Правильно: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
+      <span>Правильно: <b v-if="currentDisplay">{{ currentDisplay }}</b> <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
 
       <p v-if="contrast" class="drill-contrast">

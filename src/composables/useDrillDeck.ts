@@ -13,7 +13,7 @@ import { useSfx } from './useSfx'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
-import { displayFor, translationFor } from '../data/wordSources'
+import { kanjiWordFor, translationFor } from '../data/wordSources'
 import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
 import { track } from '../utils/analytics'
@@ -116,16 +116,21 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const isSingleKana = computed(() => currentChunk.value.length === 1)
 
-  // Переклад картки у словниковому режимі ('' поза ним або без збігу).
-  const currentTranslation = computed(() =>
-    isWordMode.value ? translationFor(expectedKana.value) : '',
+  // У кандзі-джерелі переклад і гліф беруться з кандзі-індексу — читання
+  // часто збігаються зі словами словника N5, але картка має показувати 山.
+  const kanjiWord = computed(() =>
+    drillMode.value === 'kanji' ? kanjiWordFor(expectedKana.value) : undefined,
   )
+
+  // Переклад картки у словесних режимах ('' поза ними або без збігу).
+  const currentTranslation = computed(() => {
+    if (kanjiWord.value) return kanjiWord.value.translation
+    return isWordMode.value ? translationFor(expectedKana.value) : ''
+  })
 
   // Гліф для показу замість кани (кандзі-слова): картка показує display,
   // а відповіддю лишається кана (читання).
-  const currentDisplay = computed(() =>
-    isWordMode.value ? displayFor(expectedKana.value) : '',
-  )
+  const currentDisplay = computed(() => kanjiWord.value?.display ?? '')
 
   // --- Stats & SRS recording -------------------------------------------------
   const stats = useKanaStats()

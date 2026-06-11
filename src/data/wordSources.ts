@@ -1,6 +1,7 @@
 import { reviewPriority, todayString, type SrsMap, type SrsStat } from '../utils/srs'
 import { VOCABULARY } from './vocabulary'
 import { NUMBER_WORDS } from './numbers'
+import { KANJI_N5 } from './kanjiN5'
 
 // Спільний шар «словесних» джерел дрила (словник N5, числа, власні слова,
 // кандзі): один тип запису, один лукап перекладу/гліфа і одне сортування за
@@ -52,7 +53,22 @@ const entryFor = (kana: string): WordEntry | undefined => {
 // формат single-kana ріже слова на окремі кани).
 export const translationFor = (kana: string): string => entryFor(kana)?.translation ?? ''
 
-export const displayFor = (kana: string): string => entryFor(kana)?.display ?? ''
+// Кандзі-слова індексуються окремо: їхні читання часто збігаються зі словами
+// словника (やま і 山), а гліф із власним перекладом потрібен лише
+// кандзі-джерелу — спільний індекс зробив би показ гліфа залежним від
+// порядку реєстрації словників.
+let kanjiCache: Map<string, WordEntry> | null = null
+
+export const kanjiWordFor = (kana: string): WordEntry | undefined => {
+  if (!kanjiCache) {
+    kanjiCache = new Map()
+    for (const entry of KANJI_N5) {
+      kanjiCache.set(entry.kana, entry)
+      kanjiCache.set(toHiragana(entry.kana), entry)
+    }
+  }
+  return kanjiCache.get(kana)
+}
 
 // Слова, чия найслабша кана найтерміновіша, — першими (та сама комбінована
 // SRS-логіка, що й у цільових джерелах дрила).

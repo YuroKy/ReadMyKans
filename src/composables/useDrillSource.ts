@@ -4,6 +4,7 @@ import { useSrsSchedule } from './useSrsSchedule'
 import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
 import { NUMBER_WORDS } from '../data/numbers'
+import { KANJI_N5 } from '../data/kanjiN5'
 import { orderByUrgency } from '../data/wordSources'
 import { useCustomVocab } from './useCustomVocab'
 import { orderBySrs, todayString } from '../utils/srs'
@@ -44,6 +45,14 @@ export const useDrillSource = (mode: Ref<string>) => {
 
     if (current === 'numbers') {
       return orderByUrgency(NUMBER_WORDS, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    // Кандзі-джерело подає ЧИТАННЯ (відповідь картки); гліф дека бере з
+    // kanjiWordFor. Терміновість — за каною читання, як і всюди.
+    if (current === 'kanji') {
+      return orderByUrgency(KANJI_N5, stats.value, schedule.value)
         .map((entry) => entry.kana)
         .join('　')
     }

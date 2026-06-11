@@ -16,6 +16,7 @@ const {
   lastOutcome,
   lastAnswer,
   currentTranslation,
+  currentDisplay,
   index,
   sessionToken,
   answerRomaji,
@@ -158,14 +159,14 @@ onMounted(() => {
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">
       <strong>✓ Правильно!</strong>
-      <span>{{ expectedKana }} = {{ expectedRomaji }}</span>
+      <span>{{ currentDisplay ? `${currentDisplay} = ` : '' }}{{ expectedKana }} = {{ expectedRomaji }}</span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
     </div>
 
     <div v-else-if="lastOutcome === 'wrong'" class="drill-feedback bad">
       <strong>✗ Не зараховано</strong>
       <span>Ви ввели: <b>{{ lastAnswer || '—' }}</b></span>
-      <span>Правильно: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
+      <span>Правильно: <b v-if="currentDisplay">{{ currentDisplay }}</b> <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b></span>
       <span v-if="currentTranslation">📖 {{ currentTranslation }}</span>
 
       <div class="drill-actions">

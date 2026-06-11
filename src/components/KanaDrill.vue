@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRef, watch } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useDrillDeck, type DrillFormat } from '../composables/useDrillDeck'
 import { useDrillPrefs, type DrillTimerSetting } from '../composables/useDrillPrefs'
 import { useCustomVocab } from '../composables/useCustomVocab'
@@ -71,6 +71,18 @@ const FORMATS: Array<{ id: DrillFormat; label: string; hint: string }> = [
   { id: 'anagram', label: '🧩 Анаграма', hint: 'Збери слово з перемішаних плиток кани' },
 ]
 
+// Single-kana формати ламають кандзі-слова (форсують розрізання читання),
+// тож для кандзі-джерела їх немає, а вибраний формат мʼяко коєрситься.
+const KANJI_UNSUPPORTED: DrillFormat[] = ['choice', 'writing']
+const availableFormats = computed(() =>
+  drillMode.value === 'kanji' ? FORMATS.filter((f) => !KANJI_UNSUPPORTED.includes(f.id)) : FORMATS,
+)
+watch([drillMode, format], () => {
+  if (drillMode.value === 'kanji' && KANJI_UNSUPPORTED.includes(format.value)) {
+    format.value = 'recognition'
+  }
+})
+
 const { prefs } = useDrillPrefs()
 const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
   { id: 'off', label: 'Без часу' },
@@ -93,7 +105,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
           <span class="eyebrow">Формат</span>
           <div class="drill-format-toggle">
             <button
-              v-for="f in FORMATS"
+              v-for="f in availableFormats"
               :key="f.id"
               type="button"
               :class="{ active: format === f.id }"
@@ -114,6 +126,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             <option value="executioner">🪓 Кат (мінімальні пари)</option>
             <option value="vocab">Словник N5</option>
             <option value="numbers">🔢 Числа і час</option>
+            <option value="kanji">㊀ Кандзі N5</option>
             <option value="custom">📝 Мій словник</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>

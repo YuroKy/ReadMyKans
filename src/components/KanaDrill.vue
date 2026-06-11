@@ -152,6 +152,27 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             </button>
           </div>
         </div>
+        <div v-if="format === 'dictation'" class="drill-format" role="group" aria-label="Спосіб вводу">
+          <span class="eyebrow">Ввід</span>
+          <div class="drill-format-toggle">
+            <button
+              type="button"
+              :class="{ active: prefs.dictationInput === 'romaji' }"
+              title="Відповідь ромадзі з клавіатури"
+              @click="prefs.dictationInput = 'romaji'"
+            >
+              Ромадзі
+            </button>
+            <button
+              type="button"
+              :class="{ active: prefs.dictationInput === 'kana' }"
+              title="Відповідь каною з екранної ґодзюон-клавіатури"
+              @click="prefs.dictationInput = 'kana'"
+            >
+              あ Кана
+            </button>
+          </div>
+        </div>
         <div v-if="format === 'dictation'" class="drill-format" role="group" aria-label="Складність диктанту">
           <span class="eyebrow">Хардкор</span>
           <div class="drill-format-toggle">

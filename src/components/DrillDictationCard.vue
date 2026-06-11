@@ -7,6 +7,7 @@ import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
 import KanaText from './KanaText.vue'
+import KanaKeyboard from './KanaKeyboard.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -20,6 +21,7 @@ const {
   index,
   sessionToken,
   answerRomaji,
+  answerVoice,
   retry,
   skip,
   timerEnabled,
@@ -35,6 +37,9 @@ const inputEl = ref<HTMLInputElement | null>(null)
 // швидша вимова. Автоплей нової картки рахується як прослуховування №1.
 const { prefs } = useDrillPrefs()
 const hardcore = computed(() => prefs.value.dictationHardcore)
+// Кана-ввід: відповідь складається екранною клавіатурою і йде шляхом
+// submitKana (як голос) — checkKanaAnswer приймає кану напряму.
+const kanaInput = computed(() => prefs.value.dictationInput === 'kana')
 const playsUsed = ref(0)
 const canReplay = computed(() => !hardcore.value || playsUsed.value < 1)
 
@@ -62,9 +67,17 @@ const resetCard = () => {
 }
 
 watch([index, sessionToken], resetCard)
+// Перемикання способу вводу посеред картки не має лишати «змішану» відповідь.
+watch(kanaInput, () => {
+  answer.value = ''
+})
 
 const submit = () => {
   if (lastOutcome.value || !answer.value.trim()) return
+  if (kanaInput.value) {
+    answerVoice(answer.value)
+    return
+  }
   // Refocus синхронно в жесті: тап по «Перевірити» крадe фокус, а пізніший
   // programmatic focus() поза жестом не відкриє клавіатуру на iOS.
   inputEl.value?.focus()
@@ -113,7 +126,9 @@ onMounted(() => {
     <p v-if="!ttsSupported" class="drill-dictation-warn">
       Синтез мовлення недоступний у цьому браузері — диктант не працюватиме.
     </p>
-    <p v-else class="drill-dictation-hint">Прослухай і запиши ромадзі</p>
+    <p v-else class="drill-dictation-hint">
+      {{ kanaInput ? 'Прослухай і набери кану' : 'Прослухай і запиши ромадзі' }}
+    </p>
 
     <p v-if="revealed && !lastOutcome" class="drill-hint">
       Підказка: <b>{{ expectedKana }}</b> = <b>{{ expectedRomaji }}</b>
@@ -123,6 +138,7 @@ onMounted(() => {
          фокус і мобільна клавіатура не губилися між картками. -->
     <form v-if="lastOutcome !== 'wrong'" class="drill-input-row" @submit.prevent="submit">
       <input
+        v-if="!kanaInput"
         ref="inputEl"
         v-model="answer"
         class="mic-select drill-input"
@@ -133,10 +149,19 @@ onMounted(() => {
         enterkeyhint="go"
         placeholder="Введіть ромадзі того, що почули"
       >
+      <output v-else class="mic-select drill-input kana-assembled">
+        <KanaText :text="answer" /><span v-if="!answer" class="kana-assembled-hint">наберіть кану нижче</span>
+      </output>
       <button class="primary-button" type="submit" :disabled="!answer.trim() || !!lastOutcome">
         Перевірити
       </button>
     </form>
+
+    <KanaKeyboard
+      v-if="kanaInput && lastOutcome !== 'wrong'"
+      :value="answer"
+      @update="answer = $event"
+    />
 
     <div v-if="!lastOutcome" class="drill-sub-actions">
       <button
@@ -184,6 +209,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.kana-assembled {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: "Noto Sans JP", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.3rem;
+}
+
+.kana-assembled-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .drill-audio-button {
   display: inline-flex;
   align-items: center;

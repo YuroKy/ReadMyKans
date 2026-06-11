@@ -10,6 +10,8 @@ export interface DrillPrefs {
   writingBlind: boolean
   dictationHardcore: boolean
   dictationRate: 1 | 1.25
+  // Ввід відповіді в диктанті: ромадзі з фізичної клавіатури чи кана з екранної.
+  dictationInput: 'romaji' | 'kana'
   growing: boolean
 }
 
@@ -20,6 +22,7 @@ export const defaultPrefs = (): DrillPrefs => ({
   writingBlind: false,
   dictationHardcore: false,
   dictationRate: 1,
+  dictationInput: 'romaji',
   growing: false,
 })
 

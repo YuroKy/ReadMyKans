@@ -49,6 +49,34 @@ test('словниковий дрил показує переклад після
   await expect(page.locator('.drill-feedback.ok')).toContainText('📖')
 })
 
+test('джерело «Числа і час»: переклад у фідбеку після відповіді', async ({ page }) => {
+  await page.goto('/#/drill')
+  await page.getByRole('button', { name: 'Розпізнавання' }).click()
+  await page.getByLabel('Джерело').selectOption('numbers')
+
+  await page.getByRole('button', { name: 'Показати підказку' }).click()
+  const romaji = await page.locator('.drill-hint b').textContent()
+  await page.getByPlaceholder('Введіть ромадзі (напр. mu)').fill(romaji ?? '')
+  await page.getByRole('button', { name: 'Перевірити' }).click()
+
+  await expect(page.locator('.drill-feedback.ok')).toContainText('📖')
+})
+
+test('кандзі N5: картка показує гліф, ховає choice/writing', async ({ page }) => {
+  await page.goto('/#/drill')
+  await page.getByRole('button', { name: 'Розпізнавання' }).click()
+  await page.getByLabel('Джерело').selectOption('kanji')
+
+  // Формати single-kana для кандзі недоступні.
+  await expect(page.getByRole('button', { name: 'Вибір' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Письмо' })).toHaveCount(0)
+
+  // На картці — кандзі (не кана): великий гліф містить не-кана символ.
+  const glyph = await page.locator('.drill-kana').textContent()
+  expect(glyph).toBeTruthy()
+  expect(/[一-鿿]/u.test(glyph ?? '')).toBe(true)
+})
+
 test('письмо: показує анімований порядок рисок', async ({ page }) => {
   await page.goto('/#/drill')
   await page.getByRole('button', { name: 'Письмо' }).click()

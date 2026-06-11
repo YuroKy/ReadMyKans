@@ -108,6 +108,7 @@ const TIMER_OPTIONS: Array<{ id: DrillTimerSetting; label: string }> = [
             <option value="confusions">Мої плутанини</option>
             <option value="executioner">🪓 Кат (мінімальні пари)</option>
             <option value="vocab">Словник N5</option>
+            <option value="numbers">🔢 Числа і час</option>
             <optgroup label="Набори">
               <option v-for="set in kanaSets" :key="set.id" :value="set.id">{{ set.label }}</option>
             </optgroup>

@@ -1,5 +1,6 @@
 import { reviewPriority, todayString, type SrsMap, type SrsStat } from '../utils/srs'
 import { VOCABULARY } from './vocabulary'
+import { NUMBER_WORDS } from './numbers'
 
 // Спільний шар «словесних» джерел дрила (словник N5, числа, власні слова,
 // кандзі): один тип запису, один лукап перекладу/гліфа і одне сортування за
@@ -30,7 +31,7 @@ let cache: Map<string, WordEntry> | null = null
 
 const buildIndex = (): Map<string, WordEntry> => {
   const map = new Map<string, WordEntry>()
-  for (const entry of [...VOCABULARY, ...customWords]) {
+  for (const entry of [...VOCABULARY, ...NUMBER_WORDS, ...customWords]) {
     map.set(entry.kana, entry)
     map.set(toHiragana(entry.kana), entry)
   }

@@ -3,6 +3,7 @@ import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
+import { NUMBER_WORDS } from '../data/numbers'
 import { orderByUrgency } from '../data/wordSources'
 import { orderBySrs, todayString } from '../utils/srs'
 import { clusterFor, ALL_CLUSTER_KANA } from '../utils/minimalPairs'
@@ -35,6 +36,12 @@ export const useDrillSource = (mode: Ref<string>) => {
     // Першими йдуть слова, чия найслабша кана найтерміновіша.
     if (current === 'vocab') {
       return orderByUrgency(VOCABULARY, stats.value, schedule.value)
+        .map((entry) => entry.kana)
+        .join('　')
+    }
+
+    if (current === 'numbers') {
+      return orderByUrgency(NUMBER_WORDS, stats.value, schedule.value)
         .map((entry) => entry.kana)
         .join('　')
     }

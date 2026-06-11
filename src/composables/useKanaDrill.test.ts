@@ -12,6 +12,18 @@ describe('useKanaDrill', () => {
     assert.equal(d.expectedRomaji.value, 'mu')
   })
 
+  it('expectedRomaji склеює діграфи й узгоджений із чекером', () => {
+    const d = useKanaDrill(ref('ひょうばんを'), ref(6))
+    assert.equal(d.expectedRomaji.value, 'hyoubanwo')
+    assert.equal(d.submitRomaji(d.expectedRomaji.value), 'correct')
+  })
+
+  it('expectedRomaji з чоонпу (ー) приймається чекером', () => {
+    const d = useKanaDrill(ref('きゅーに'), ref(4))
+    assert.equal(d.expectedRomaji.value, 'kyu-ni')
+    assert.equal(d.submitRomaji(d.expectedRomaji.value), 'correct')
+  })
+
   it('chunkSize=2 групує по дві кани', () => {
     const d = useKanaDrill(ref('むかし'), ref(2))
     assert.equal(d.total.value, 2)

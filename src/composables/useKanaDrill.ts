@@ -2,7 +2,7 @@ import { computed, ref, type Ref } from 'vue'
 import { isKana } from '../utils/kana'
 import { toReadingHiragana, readingReady } from '../utils/reading'
 import { chunkKanaByWords, takeChunk, checkKanaAnswer, checkRomajiAnswer } from '../utils/chunking'
-import { kanaToRomaji } from '../utils/romaji'
+import { textToRomajiCompact } from '../utils/romaji'
 
 export type DrillOutcome = 'correct' | 'wrong'
 
@@ -46,7 +46,9 @@ export const useKanaDrill = (
       : (chunks.value[index.value] ?? []),
   )
   const expectedKana = computed(() => currentChunk.value.join(''))
-  const expectedRomaji = computed(() => currentChunk.value.map(kanaToRomaji).join(''))
+  // Через textToRomajiCompact, а не покансово — інакше ひょ показувалось би як
+  // «hiyo», і підказка суперечила б checkRomajiAnswer, який чекає «hyo».
+  const expectedRomaji = computed(() => textToRomajiCompact(expectedKana.value))
   const isFinished = computed(() =>
     isGrowing.value
       ? totalKana.value > 0 && doneKana.value >= totalKana.value

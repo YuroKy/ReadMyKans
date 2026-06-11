@@ -122,10 +122,13 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     drillMode.value === 'kanji' ? kanjiWordFor(expectedKana.value) : undefined,
   )
 
-  // Переклад картки у словесних режимах ('' поза ними або без збігу).
+  // Переклад картки у словесних режимах і при шматку «слово» в текстовому
+  // режимі — там картка теж є цілим словом, тож відомі слова підписуються
+  // ('' без збігу зі словниками — UI ховає рядок).
+  const isWholeWordChunk = computed(() => effectiveChunkSize.value === Number.MAX_SAFE_INTEGER)
   const currentTranslation = computed(() => {
     if (kanjiWord.value) return kanjiWord.value.translation
-    return isWordMode.value ? translationFor(expectedKana.value) : ''
+    return isWordMode.value || isWholeWordChunk.value ? translationFor(expectedKana.value) : ''
   })
 
   // Гліф для показу замість кани (кандзі-слова): картка показує display,

@@ -10,6 +10,7 @@ import { usePushToTalk } from '../composables/usePushToTalk'
 import { isWeak, topConfusion } from '../composables/useKanaStats'
 import { kanaToRomaji } from '../utils/romaji'
 import { kanaContrast } from '../utils/kanaContrast'
+import { mnemonicFor } from '../data/mnemonics'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
@@ -129,6 +130,10 @@ const contrast = computed(() =>
     : null,
 )
 
+// Мнемоніка форми: для слабкої кани — одразу як підказка, після помилки —
+// завжди (образ чіпляється краще за «правильно: mu»).
+const mnemonic = computed(() => (isSingleKana.value ? mnemonicFor(expectedKana.value) : ''))
+
 onMounted(() => focusInput())
 </script>
 
@@ -162,6 +167,7 @@ onMounted(() => focusInput())
       <span v-if="confusionHint" class="drill-cue confuse">
         💡 Не сплутай з <b>{{ confusionHint }}</b>
       </span>
+      <span v-if="weakBadge && mnemonic" class="drill-cue mnemonic">🧠 {{ mnemonic }}</span>
     </div>
 
     <p v-if="revealed && !lastOutcome" class="drill-hint">
@@ -241,6 +247,7 @@ onMounted(() => focusInput())
       <p v-if="contrast" class="drill-contrast">
         {{ contrast.note }}
       </p>
+      <p v-if="mnemonic" class="drill-contrast">🧠 {{ mnemonic }}</p>
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>

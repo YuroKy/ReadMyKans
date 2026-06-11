@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { DrillDeck } from '../composables/useDrillDeck'
 import { kanaContrast } from '../utils/kanaContrast'
+import { mnemonicFor } from '../data/mnemonics'
 import { buildChoices } from '../utils/drillDistractors'
 import { clusterFor } from '../utils/minimalPairs'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
@@ -69,6 +70,8 @@ const contrast = computed(() =>
     ? kanaContrast(expectedKana.value, lastConfused.value)
     : null,
 )
+
+const mnemonic = computed(() => mnemonicFor(expectedKana.value))
 
 // Десктоп: клавіші 1–4 тапають відповідну плитку.
 const onKeydown = (event: KeyboardEvent) => {
@@ -145,6 +148,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       <p v-if="contrast" class="drill-contrast">
         {{ contrast.note }}
       </p>
+      <p v-if="mnemonic" class="drill-contrast">🧠 {{ mnemonic }}</p>
 
       <div class="drill-actions">
         <button class="secondary-button" type="button" @click="tryAgain">Спробувати ще</button>

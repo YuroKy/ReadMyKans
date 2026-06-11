@@ -3,10 +3,16 @@ import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { buildKanaSets } from '../utils/kanaSets'
 import { VOCABULARY } from '../data/vocabulary'
-import { orderBySrs, reviewPriority, todayString } from '../utils/srs'
+import { orderByUrgency } from '../data/wordSources'
+import { orderBySrs, todayString } from '../utils/srs'
 import { clusterFor, ALL_CLUSTER_KANA } from '../utils/minimalPairs'
 
 export const DRILL_MODE_TEXT = 'text'
+
+// «Словесні» джерела подають слова через повноширинний пробіл — дека форсує
+// картку «ціле слово» і показує переклад у фідбеку.
+const WORD_MODES = new Set(['vocab', 'numbers', 'custom', 'kanji'])
+export const isWordSource = (mode: string): boolean => WORD_MODES.has(mode)
 
 // Resolves the kana to drill from a selected mode. Returns `null` for the
 // «text» mode (the caller should use the raw source text) and a kana string
@@ -28,13 +34,7 @@ export const useDrillSource = (mode: Ref<string>) => {
     // Слова через повноширинний пробіл — чанкінг дрила ріже по словах.
     // Першими йдуть слова, чия найслабша кана найтерміновіша.
     if (current === 'vocab') {
-      const today = todayString()
-      const urgency = (word: string): number =>
-        Math.max(
-          ...[...word].map((kana) => reviewPriority(stats.value[kana], schedule.value[kana], today)),
-        )
-      return [...VOCABULARY]
-        .sort((a, b) => urgency(b.kana) - urgency(a.kana))
+      return orderByUrgency(VOCABULARY, stats.value, schedule.value)
         .map((entry) => entry.kana)
         .join('　')
     }

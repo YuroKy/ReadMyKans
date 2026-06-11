@@ -1,6 +1,6 @@
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { useKanaDrill } from './useKanaDrill'
-import { useDrillSource } from './useDrillSource'
+import { isWordSource, useDrillSource } from './useDrillSource'
 import { useKanaStats } from './useKanaStats'
 import { useSrsSchedule } from './useSrsSchedule'
 import { useDailyProgress } from './useDailyProgress'
@@ -13,7 +13,7 @@ import { useSfx } from './useSfx'
 import { isKana, HIRAGANA_ROWS, KATAKANA_ROWS } from '../utils/kana'
 import { romajiToKana } from '../utils/romaji'
 import { analyzeKanaDifficulty } from '../utils/kanaDifficulty'
-import { translationFor } from '../data/vocabulary'
+import { displayFor, translationFor } from '../data/wordSources'
 import { collectConfusionPairs } from '../utils/confusions'
 import { encouragement } from '../utils/encouragement'
 import { track } from '../utils/analytics'
@@ -53,7 +53,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
 
   const chunkSize = ref(1)
   const isSingleKanaFormat = computed(() => SINGLE_KANA_FORMATS.includes(format.value))
-  const isWordMode = computed(() => drillMode.value === 'vocab')
+  const isWordMode = computed(() => isWordSource(drillMode.value))
   const effectiveChunkSize = computed(() => {
     if (isSingleKanaFormat.value) return 1
     if (isWordMode.value) return Number.MAX_SAFE_INTEGER
@@ -116,6 +116,12 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
   // Переклад картки у словниковому режимі ('' поза ним або без збігу).
   const currentTranslation = computed(() =>
     isWordMode.value ? translationFor(expectedKana.value) : '',
+  )
+
+  // Гліф для показу замість кани (кандзі-слова): картка показує display,
+  // а відповіддю лишається кана (читання).
+  const currentDisplay = computed(() =>
+    isWordMode.value ? displayFor(expectedKana.value) : '',
   )
 
   // --- Stats & SRS recording -------------------------------------------------
@@ -408,6 +414,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     lastAnswer,
     isSingleKana,
     currentTranslation,
+    currentDisplay,
     // answering
     answerRomaji,
     answerVoice,

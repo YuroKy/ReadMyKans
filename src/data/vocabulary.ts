@@ -130,23 +130,5 @@ export const VOCABULARY: VocabularyEntry[] = [
   { kana: 'たのしい', translation: 'веселий; приємний' },
 ]
 
-const toHiragana = (text: string): string =>
-  [...text]
-    .map((char) => {
-      const code = char.codePointAt(0) ?? 0
-      return code >= 0x30a1 && code <= 0x30f6 ? String.fromCodePoint(code - 0x60) : char
-    })
-    .join('')
-
-// Індексуємо і сирий запис, і хіраґана-форму: дрил веде картки через читання
-// kuromoji, яке зводить катакана-слова (テレビ) до хіраґани (てれび).
-const BY_KANA = new Map(
-  VOCABULARY.flatMap((entry) => [
-    [entry.kana, entry.translation] as const,
-    [toHiragana(entry.kana), entry.translation] as const,
-  ]),
-)
-
-// Переклад для кани слова; '' коли слова немає у словнику (наприклад, коли
-// формат single-kana ріже слова на окремі кани).
-export const translationFor = (kana: string): string => BY_KANA.get(kana) ?? ''
+// Лукап перекладів переїхав у ./wordSources (спільний для всіх словесних
+// джерел: словник, числа, власні слова, кандзі).

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { VOCABULARY, translationFor } from './vocabulary'
+import { VOCABULARY } from './vocabulary'
 import { isKana } from '../utils/kana'
 
 describe('vocabulary', () => {
@@ -22,16 +22,5 @@ describe('vocabulary', () => {
       )
       assert.ok(entry.translation.trim().length > 0, `«${entry.kana}» без перекладу`)
     }
-  })
-
-  it('translationFor знаходить слово і повертає порожньо для невідомого', () => {
-    assert.equal(translationFor('ねこ'), 'кіт')
-    assert.equal(translationFor('ぬぬぬ'), '')
-  })
-
-  it('катакана-слова знаходяться і за хіраґана-формою (читання kuromoji)', () => {
-    assert.equal(translationFor('テレビ'), 'телевізор')
-    assert.equal(translationFor('てれび'), 'телевізор')
-    assert.equal(translationFor('こーひー'), 'кава')
   })
 })

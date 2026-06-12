@@ -7,6 +7,7 @@ import { buildChoices } from '../utils/drillDistractors'
 import { clusterFor } from '../utils/minimalPairs'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import SkipControl from './SkipControl.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
 const {
@@ -129,10 +130,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     </div>
 
     <div v-if="!lastOutcome" class="drill-sub-actions">
-      <button class="ghost-button small" type="button" @click="skip()">Пропустити</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skip(3)">×3</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skip(5)">×5</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skip(10)">×10</button>
+      <SkipControl @skip="skip" />
     </div>
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">

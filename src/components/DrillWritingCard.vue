@@ -9,6 +9,7 @@ import {
 } from '../utils/strokeMatch'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import SkipControl from './SkipControl.vue'
 import StrokeOrderHint from './StrokeOrderHint.vue'
 
 const props = defineProps<{ deck: DrillDeck }>()
@@ -305,10 +306,7 @@ onMounted(() => {
       >
         {{ showStrokeHint ? 'Сховати риски' : 'Порядок рисок' }}
       </button>
-      <button class="ghost-button small" type="button" @click="skip()">Пропустити</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skip(3)">×3</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skip(5)">×5</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skip(10)">×10</button>
+      <SkipControl @skip="skip" />
       <button class="primary-button" type="button" @click="check">Перевірити</button>
     </div>
 
@@ -331,6 +329,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* iOS Safari: швидкі рухи пером/пальцем читаються як подвійний тап і
+   виділяють canvas чи сусідній текст з меню «Скопіювати/Тлумачити».
+   touch-action на полотні цього не покриває — виділення вимикається
+   лише через user-select/-webkit-touch-callout, тому глушимо всю картку. */
+.drill-card {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .drill-write-prompt {
   display: grid;
   justify-items: center;

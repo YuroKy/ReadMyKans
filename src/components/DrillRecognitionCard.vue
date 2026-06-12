@@ -13,6 +13,7 @@ import { kanaContrast } from '../utils/kanaContrast'
 import { mnemonicFor } from '../data/mnemonics'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import SkipControl from './SkipControl.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
 import KanaText from './KanaText.vue'
 
@@ -228,10 +229,7 @@ onMounted(() => focusInput())
       <button class="ghost-button small" type="button" @click="revealed = true">
         Показати підказку
       </button>
-      <button class="ghost-button small" type="button" @click="skipCards(1)">Пропустити</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skipCards(3)">×3</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skipCards(5)">×5</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skipCards(10)">×10</button>
+      <SkipControl @skip="skipCards" />
     </div>
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">

@@ -5,6 +5,7 @@ import { useDrillPrefs } from '../composables/useDrillPrefs'
 import { kanaToRomaji } from '../utils/romaji'
 import { speakKana, isSpeechSynthesisSupported } from '../utils/kanaSpeech'
 import SakuraDecor from './SakuraDecor.vue'
+import SkipControl from './SkipControl.vue'
 import DrillTimerBar from './DrillTimerBar.vue'
 import KanaText from './KanaText.vue'
 import KanaKeyboard from './KanaKeyboard.vue'
@@ -176,10 +177,7 @@ onMounted(() => {
       <button v-if="!hardcore" class="ghost-button small" type="button" @click="revealed = true">
         Показати кану
       </button>
-      <button class="ghost-button small" type="button" @click="skipCards(1)">Пропустити</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 3 кани" @click="skipCards(3)">×3</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 5 кан" @click="skipCards(5)">×5</button>
-      <button class="ghost-button small" type="button" aria-label="Пропустити 10 кан" @click="skipCards(10)">×10</button>
+      <SkipControl @skip="skipCards" />
     </div>
 
     <div v-if="lastOutcome === 'correct'" class="drill-feedback ok">

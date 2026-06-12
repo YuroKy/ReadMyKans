@@ -1,4 +1,4 @@
-import { DEFAULT_STORY } from './defaultStory'
+import { ISSUN_BOSHI_STORY, KAGUYA_STORY } from './defaultStory'
 
 export interface LibraryText {
   id: string
@@ -103,8 +103,15 @@ export const LIBRARY: LibraryText[] = [
     id: 'kaguya',
     title: 'かぐやひめ',
     level: 'Середній',
-    description: 'Казка про принцесу Каґую — текст за замовчуванням.',
-    text: DEFAULT_STORY,
+    description: 'Казка про принцесу Каґую — довша історія з місячним фіналом.',
+    text: KAGUYA_STORY,
+  },
+  {
+    id: 'issun-boshi',
+    title: 'いっすんぼうし',
+    level: 'Середній',
+    description: 'Казка про хлопчика-мізинчика — текст за замовчуванням.',
+    text: ISSUN_BOSHI_STORY,
   },
 ]
 

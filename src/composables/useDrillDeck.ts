@@ -180,8 +180,11 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     combo.value = 0
   }
 
-  // Auto-advance after a correct answer (same 800ms beat across formats). Every
+  // Auto-advance after a correct answer (same beat across formats). Every
   // answered card counts toward the daily goal; crossing it celebrates once.
+  // Картки з перекладом тримаються довше — 800 мс не вистачає, щоб його
+  // прочитати; голій кані достатньо короткого біта.
+  const correctPauseMs = () => (currentTranslation.value ? 2500 : 800)
   const handleOutcome = (outcome: DrillOutcome) => {
     playSfx(outcome === 'correct' ? 'correct' : 'wrong')
     trackCombo(outcome)
@@ -196,7 +199,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     window.setTimeout(() => {
       if (!isFinished.value) next()
       else lastOutcome.value = null
-    }, 800)
+    }, correctPauseMs())
   }
 
   // --- Per-card timer (recognition/dictation only) ----------------------------
@@ -235,7 +238,7 @@ export const useDrillDeck = (sourceText: Ref<string>) => {
     timerGeneration.value += 1
     timerHandle = window.setTimeout(timeoutCard, timerDurationMs.value)
   }
-  // An answered card awaiting the 800 ms auto-advance must never time out.
+  // An answered card awaiting the auto-advance must never time out.
   watch(lastOutcome, (outcome) => {
     if (outcome) cancelTimer()
   })

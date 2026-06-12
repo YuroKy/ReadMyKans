@@ -50,7 +50,7 @@ ReadMyKans/
 │   │   ├── chunking.ts          # chunkKana, checkRomajiAnswer, checkKanaAnswer
 │   │   ├── reading.ts           # kuromoji: toReadingHiragana (кандзі→кана)
 │   │   ├── kana.ts / romaji.ts / levenshtein.ts / textNormalize.ts
-│   ├── data/defaultStory.ts     # Дефолтний текст (казка かぐやひめ)
+│   ├── data/defaultStory.ts     # Дефолтний текст (казка いっすんぼうし) + かぐやひめ
 │   ├── App.vue                  # Root: view = setup | drill | reading | result
 │   └── main.ts
 │   └── **/*.test.ts             # Тести (node:test), виключені з прод-збірки

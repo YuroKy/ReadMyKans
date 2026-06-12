@@ -26,6 +26,7 @@ describe('library', () => {
 
   it('looks up entries by id', () => {
     assert.equal(libraryTextById('kaguya')?.title, 'かぐやひめ')
+    assert.equal(libraryTextById('issun-boshi')?.title, 'いっすんぼうし')
     assert.equal(libraryTextById('nope'), undefined)
   })
 })

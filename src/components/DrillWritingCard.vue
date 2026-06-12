@@ -331,6 +331,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* iOS Safari: швидкі рухи пером/пальцем читаються як подвійний тап і
+   виділяють canvas чи сусідній текст з меню «Скопіювати/Тлумачити».
+   touch-action на полотні цього не покриває — виділення вимикається
+   лише через user-select/-webkit-touch-callout, тому глушимо всю картку. */
+.drill-card {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .drill-write-prompt {
   display: grid;
   justify-items: center;
